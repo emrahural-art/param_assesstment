@@ -235,11 +235,14 @@ export default function ExamPage() {
           <CardContent className="space-y-4">
             {result ? (
               <>
-                <p className="text-4xl font-bold">
-                  {result.score}/{result.totalPoints}
-                </p>
+                {result.totalPoints > 0 ? (
+                  <p className="text-4xl font-bold">
+                    {result.score}/{result.totalPoints}
+                  </p>
+                ) : null}
                 <p className="text-muted-foreground">
                   Cevaplarınız başarıyla kaydedildi.
+                  {result.totalPoints === 0 && " Yanıtlarınız değerlendirildikten sonra sizinle iletişime geçilecektir."}
                 </p>
               </>
             ) : (
@@ -348,7 +351,12 @@ export default function ExamPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{currentQuestion.text}</CardTitle>
-                <Badge variant="secondary">{currentQuestion.points} puan</Badge>
+                {currentQuestion.type !== "PERSONALITY_SCALE" && currentQuestion.points > 0 && (
+                  <Badge variant="secondary">{currentQuestion.points} puan</Badge>
+                )}
+                {currentQuestion.type === "PERSONALITY_SCALE" && (
+                  <Badge variant="outline" className="text-blue-600 border-blue-300">Kişilik Ölçeği</Badge>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -449,6 +457,44 @@ export default function ExamPage() {
                   rows={5}
                   className="resize-none"
                 />
+              )}
+
+              {/* PERSONALITY_SCALE (Likert) */}
+              {currentQuestion.type === "PERSONALITY_SCALE" && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-5 gap-2">
+                    {(currentQuestion.options ?? []).map((option, i) => {
+                      const selected = answers[currentQuestion.id] === String(i + 1);
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() =>
+                            setAnswers((prev) => ({
+                              ...prev,
+                              [currentQuestion.id]: String(i + 1),
+                            }))
+                          }
+                          className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 transition-colors ${
+                            selected
+                              ? "border-blue-500 bg-blue-50 text-blue-800"
+                              : "hover:bg-muted/50"
+                          }`}
+                        >
+                          <span className={`text-lg font-bold ${selected ? "text-blue-600" : "text-muted-foreground"}`}>
+                            {i + 1}
+                          </span>
+                          <span className="text-[11px] leading-tight text-center">
+                            {option}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    1 = Kesinlikle Katılmıyorum &mdash; 5 = Kesinlikle Katılıyorum
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>

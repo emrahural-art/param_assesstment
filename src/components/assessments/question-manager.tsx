@@ -9,18 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 type Question = {
@@ -38,7 +30,16 @@ const typeLabels: Record<string, string> = {
   MULTI_SELECT: "Çoklu Seçim",
   TRUE_FALSE: "Doğru/Yanlış",
   OPEN_ENDED: "Açık Uçlu",
+  PERSONALITY_SCALE: "Kişilik Ölçeği",
 };
+
+const LIKERT_OPTIONS = [
+  "Kesinlikle Katılmıyorum",
+  "Katılmıyorum",
+  "Kararsızım",
+  "Katılıyorum",
+  "Kesinlikle Katılıyorum",
+];
 
 interface QuestionManagerProps {
   assessmentId: string;
@@ -93,14 +94,25 @@ export function QuestionManager({
 
     const filteredOptions = options.filter((o) => o.trim() !== "");
 
+    const resolvedOptions =
+      type === "OPEN_ENDED"
+        ? []
+        : type === "TRUE_FALSE"
+          ? ["Doğru", "Yanlış"]
+          : type === "PERSONALITY_SCALE"
+            ? LIKERT_OPTIONS
+            : filteredOptions;
+
     const body = {
       text,
       type,
-      options: type === "OPEN_ENDED" ? [] : type === "TRUE_FALSE" ? ["Doğru", "Yanlış"] : filteredOptions,
-      correctAnswer: correctAnswer || undefined,
-      points,
+      options: resolvedOptions,
+      correctAnswer: type === "OPEN_ENDED" || type === "PERSONALITY_SCALE" ? undefined : correctAnswer || undefined,
+      points: type === "PERSONALITY_SCALE" ? 0 : points,
       order: editingQuestion ? editingQuestion.order : questions.length,
     };
+
+    console.log("[QuestionManager] Saving:", { assessmentId, body });
 
     try {
       if (editingQuestion) {
@@ -112,7 +124,16 @@ export function QuestionManager({
             body: JSON.stringify(body),
           }
         );
-        if (!res.ok) throw new Error();
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(
+            errData?.error
+              ? typeof errData.error === "string"
+                ? errData.error
+                : JSON.stringify(errData.error)
+              : `HTTP ${res.status}`
+          );
+        }
 
         const updated = await res.json();
         setQuestions((prev) =>
@@ -131,7 +152,16 @@ export function QuestionManager({
             body: JSON.stringify(body),
           }
         );
-        if (!res.ok) throw new Error();
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(
+            errData?.error
+              ? typeof errData.error === "string"
+                ? errData.error
+                : JSON.stringify(errData.error)
+              : `HTTP ${res.status}`
+          );
+        }
 
         const created = await res.json();
         setQuestions((prev) => [
@@ -143,8 +173,8 @@ export function QuestionManager({
       setDialogOpen(false);
       resetForm();
       router.refresh();
-    } catch {
-      setError("İşlem başarısız");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "İşlem başarısız");
     } finally {
       setLoading(false);
     }
@@ -173,10 +203,8 @@ export function QuestionManager({
         <h3 className="text-lg font-semibold">
           Sorular ({questions.length})
         </h3>
+        <Button onClick={openCreate}>Soru Ekle</Button>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger>
-            <Button onClick={openCreate}>Soru Ekle</Button>
-          </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -197,36 +225,30 @@ export function QuestionManager({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Soru Tipi</Label>
-                  <Select value={type} onValueChange={(v) => setType(v ?? "MULTIPLE_CHOICE")}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="MULTIPLE_CHOICE">
-                        Çoktan Seçmeli
-                      </SelectItem>
-                      <SelectItem value="MULTI_SELECT">
-                        Çoklu Seçim
-                      </SelectItem>
-                      <SelectItem value="TRUE_FALSE">
-                        Doğru/Yanlış
-                      </SelectItem>
-                      <SelectItem value="OPEN_ENDED">
-                        Açık Uçlu
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select
+                    value={type}
+                    onChange={(e) => setType(e.target.value)}
+                    className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
+                  >
+                    <option value="MULTIPLE_CHOICE">Çoktan Seçmeli</option>
+                    <option value="MULTI_SELECT">Çoklu Seçim</option>
+                    <option value="TRUE_FALSE">Doğru/Yanlış</option>
+                    <option value="OPEN_ENDED">Açık Uçlu</option>
+                    <option value="PERSONALITY_SCALE">Kişilik Ölçeği (Likert)</option>
+                  </select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Puan</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={points}
-                    onChange={(e) => setPoints(parseInt(e.target.value, 10) || 1)}
-                  />
-                </div>
+                {type !== "PERSONALITY_SCALE" && (
+                  <div className="space-y-2">
+                    <Label>Puan</Label>
+                    <Input
+                      type="number"
+                      min={type === "OPEN_ENDED" ? 0 : 1}
+                      value={points}
+                      onChange={(e) => setPoints(parseInt(e.target.value, 10) || 1)}
+                    />
+                  </div>
+                )}
               </div>
 
               {(type === "MULTIPLE_CHOICE" || type === "MULTI_SELECT") && (
@@ -268,22 +290,38 @@ export function QuestionManager({
                 </div>
               )}
 
-              {type !== "OPEN_ENDED" && (
+              {type === "PERSONALITY_SCALE" && (
+                <div className="rounded-lg border bg-muted/50 p-3">
+                  <p className="text-sm font-medium mb-2">Likert Ölçeği (5'li)</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {LIKERT_OPTIONS.map((opt) => (
+                      <span
+                        key={opt}
+                        className="inline-flex items-center rounded-md border bg-background px-2.5 py-1 text-xs"
+                      >
+                        {opt}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Doğru/yanlış cevap yoktur, adayın yanıtı profil olarak kaydedilir.
+                  </p>
+                </div>
+              )}
+
+              {type !== "OPEN_ENDED" && type !== "PERSONALITY_SCALE" && (
                 <div className="space-y-2">
                   <Label>Doğru Cevap</Label>
                   {type === "TRUE_FALSE" ? (
-                    <Select
+                    <select
                       value={correctAnswer}
-                      onValueChange={(v) => setCorrectAnswer(v ?? "")}
+                      onChange={(e) => setCorrectAnswer(e.target.value)}
+                      className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçin" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Doğru">Doğru</SelectItem>
-                        <SelectItem value="Yanlış">Yanlış</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <option value="">Seçin</option>
+                      <option value="Doğru">Doğru</option>
+                      <option value="Yanlış">Yanlış</option>
+                    </select>
                   ) : (
                     <Input
                       value={correctAnswer}
@@ -335,9 +373,16 @@ export function QuestionManager({
                         <Badge variant="secondary" className="text-xs">
                           {typeLabels[q.type] ?? q.type}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {q.points} puan
-                        </span>
+                        {q.type !== "PERSONALITY_SCALE" && (
+                          <span className="text-xs text-muted-foreground">
+                            {q.points} puan
+                          </span>
+                        )}
+                        {!q.correctAnswer && q.type !== "PERSONALITY_SCALE" && q.type !== "OPEN_ENDED" && (
+                          <span className="text-xs text-amber-600">
+                            Doğru cevap belirtilmemiş
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -367,13 +412,16 @@ export function QuestionManager({
                       <span
                         key={i}
                         className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs ${
-                          opt === q.correctAnswer
-                            ? "border-green-300 bg-green-50 text-green-800"
-                            : "bg-muted/50"
+                          q.type === "PERSONALITY_SCALE"
+                            ? "bg-blue-50 border-blue-200 text-blue-800"
+                            : opt === q.correctAnswer
+                              ? "border-green-300 bg-green-50 text-green-800"
+                              : "bg-muted/50"
                         }`}
                       >
+                        {q.type === "PERSONALITY_SCALE" && `${i + 1}. `}
                         {opt}
-                        {opt === q.correctAnswer && " ✓"}
+                        {q.type !== "PERSONALITY_SCALE" && opt === q.correctAnswer && " ✓"}
                       </span>
                     ))}
                   </div>

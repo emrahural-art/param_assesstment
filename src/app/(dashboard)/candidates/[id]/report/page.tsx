@@ -156,10 +156,13 @@ export default async function CandidateReportPage({
                     <div className="flex items-center justify-between mb-2">
                       <p className="font-medium">{r.assessmentTitle}</p>
                       <div className="flex items-center gap-2">
-                        {r.score !== null && r.totalPoints !== null && (
+                        {r.totalPoints !== null && r.totalPoints > 0 && r.score !== null && (
                           <span className="text-lg font-bold">
                             {r.score}/{r.totalPoints}
                           </span>
+                        )}
+                        {r.totalPoints === 0 && r.personalityAnswers.length > 0 && (
+                          <Badge variant="outline" className="text-blue-600 border-blue-300">Kişilik Envanteri</Badge>
                         )}
                         {pct !== null && (
                           <Badge
@@ -210,6 +213,61 @@ export default async function CandidateReportPage({
           )}
         </CardContent>
       </Card>
+
+      {/* Personality Inventory */}
+      {report.assessmentResults.some((r) => r.personalityAnswers.length > 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Kişilik Envanteri</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {report.assessmentResults
+                .filter((r) => r.personalityAnswers.length > 0)
+                .map((r, ri) => (
+                  <div key={ri}>
+                    <p className="text-sm font-medium mb-3">{r.assessmentTitle}</p>
+                    <div className="space-y-3">
+                      {r.personalityAnswers.map((pa, pi) => (
+                        <div key={pi} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm">{pa.questionText}</p>
+                            <span className="text-sm font-medium text-blue-600 shrink-0 ml-4">
+                              {pa.value}/5
+                            </span>
+                          </div>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((level) => (
+                              <div
+                                key={level}
+                                className={`h-2 flex-1 rounded-full ${
+                                  level <= pa.value ? "bg-blue-500" : "bg-muted"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {r.personalityAnswers.length > 0 && (
+                      <div className="mt-3 pt-3 border-t">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Ortalama</span>
+                          <span className="font-medium text-blue-600">
+                            {(
+                              r.personalityAnswers.reduce((s, a) => s + a.value, 0) /
+                              r.personalityAnswers.length
+                            ).toFixed(1)}/5
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Notes */}
       <Card>

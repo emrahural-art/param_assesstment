@@ -353,6 +353,57 @@ async function main() {
   }
   console.log("  Assessment: 10 sorulu JS testi");
 
+  // --- Personality Inventory ---
+  const personalityAssessment = await prisma.assessment.upsert({
+    where: { id: "test-personality" },
+    update: {},
+    create: {
+      id: "test-personality",
+      title: "Kişilik Envanteri",
+      description: "Adayların kişilik özelliklerini değerlendiren Likert ölçeğinde envanter.",
+      durationMinutes: 10,
+      difficulty: "EASY",
+      isActive: true,
+    },
+  });
+
+  const personalityQuestions = [
+    "Ekip çalışmasında liderlik rolü üstlenmeyi tercih ederim.",
+    "Stresli durumlarda sakin kalabilirim.",
+    "Yeni fikirler üretmeyi ve risk almayı severim.",
+    "Detaylara dikkat ederim ve titiz çalışırım.",
+    "İnsanlarla iletişim kurmak bana enerji verir.",
+    "Değişen koşullara hızlı adapte olabilirim.",
+    "Kararlarımda veriye ve analize dayalı düşünürüm.",
+    "Eleştirilere açığım ve geri bildirimden öğrenirim.",
+  ];
+
+  const likertOptions = [
+    "Kesinlikle Katılmıyorum",
+    "Katılmıyorum",
+    "Kararsızım",
+    "Katılıyorum",
+    "Kesinlikle Katılıyorum",
+  ];
+
+  for (let i = 0; i < personalityQuestions.length; i++) {
+    await prisma.question.upsert({
+      where: { id: `q-pers-${i + 1}` },
+      update: {},
+      create: {
+        id: `q-pers-${i + 1}`,
+        assessmentId: personalityAssessment.id,
+        text: personalityQuestions[i],
+        type: "PERSONALITY_SCALE",
+        options: likertOptions,
+        correctAnswer: null,
+        points: 0,
+        order: i,
+      },
+    });
+  }
+  console.log("  Assessment: 8 sorulu Kişilik Envanteri");
+
   // --- Candidate Notes ---
   await prisma.candidateNote.create({
     data: {

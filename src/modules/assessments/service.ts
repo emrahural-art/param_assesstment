@@ -59,7 +59,12 @@ export async function submitExam(
   let score = 0;
   let totalPoints = 0;
 
+  const unscoredTypes = ["OPEN_ENDED", "PERSONALITY_SCALE"];
+
   for (const question of assessment.questions) {
+    if (unscoredTypes.includes(question.type)) continue;
+    if (!question.correctAnswer) continue;
+
     totalPoints += question.points;
     const answer = answers.find((a) => a.questionId === question.id);
     if (answer && answer.answer === question.correctAnswer) {

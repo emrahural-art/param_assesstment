@@ -41,6 +41,7 @@ enum QuestionType {
   MULTI_SELECT
   TRUE_FALSE
   OPEN_ENDED
+  PERSONALITY_SCALE
 }
 
 enum Difficulty {

@@ -6,7 +6,7 @@ export async function getCandidateReportCard(candidateId: string): Promise<Candi
     where: { id: candidateId },
     include: {
       applications: { include: { listing: true } },
-      assessmentResults: { include: { assessment: true } },
+      assessmentResults: { include: { assessment: { include: { questions: true } } } },
       notes: { include: { user: { select: { name: true } } }, orderBy: { createdAt: "desc" } },
     },
   });
@@ -29,13 +29,25 @@ export async function getCandidateReportCard(candidateId: string): Promise<Candi
       appliedAt: app.appliedAt.toISOString(),
     })),
     assessmentResults: candidate.assessmentResults.map(
-      (r: { assessment: { title: string }; score: number | null; totalPoints: number | null; completedAt: Date | null; violations: unknown }) => ({
-        assessmentTitle: r.assessment.title,
-        score: r.score,
-        totalPoints: r.totalPoints,
-        completedAt: r.completedAt?.toISOString() ?? null,
-        violations: (r.violations as unknown[]) ?? [],
-      })
+      (r: { assessment: { title: string; questions: { id: string; text: string; type: string }[] }; score: number | null; totalPoints: number | null; completedAt: Date | null; violations: unknown; answers: unknown }) => {
+        const personalityQuestions = r.assessment.questions.filter(
+          (q: { type: string }) => q.type === "PERSONALITY_SCALE"
+        );
+        const answersArray = (r.answers as { questionId: string; answer: string }[]) ?? [];
+        const personalityAnswers = personalityQuestions.map((q: { id: string; text: string }) => {
+          const ans = answersArray.find((a: { questionId: string }) => a.questionId === q.id);
+          return { questionText: q.text, value: ans ? parseInt(ans.answer, 10) || 0 : 0 };
+        });
+
+        return {
+          assessmentTitle: r.assessment.title,
+          score: r.score,
+          totalPoints: r.totalPoints,
+          completedAt: r.completedAt?.toISOString() ?? null,
+          violations: (r.violations as unknown[]) ?? [],
+          personalityAnswers,
+        };
+      }
     ),
     notes: candidate.notes.map((n: { user: { name: string }; content: string; rating: number | null; createdAt: Date }) => ({
       authorName: n.user.name,

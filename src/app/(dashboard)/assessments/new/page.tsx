@@ -20,6 +20,7 @@ export default function NewAssessmentPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [difficulty, setDifficulty] = useState("MEDIUM");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,7 +32,7 @@ export default function NewAssessmentPage() {
       title: form.get("title") as string,
       description: form.get("description") as string,
       durationMinutes: parseInt(form.get("durationMinutes") as string, 10),
-      difficulty: form.get("difficulty") as string,
+      difficulty,
     };
 
     try {
@@ -108,7 +109,7 @@ export default function NewAssessmentPage() {
 
               <div className="space-y-2">
                 <Label>Zorluk</Label>
-                <Select name="difficulty" defaultValue="MEDIUM">
+                <Select value={difficulty} onValueChange={(v) => setDifficulty(v ?? "MEDIUM")}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

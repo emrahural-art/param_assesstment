@@ -1,3 +1,8 @@
+export type PersonalityAnswer = {
+  questionText: string;
+  value: number;
+};
+
 export type CandidateReportCard = {
   candidateId: string;
   fullName: string;
@@ -13,6 +18,7 @@ export type CandidateReportCard = {
     totalPoints: number | null;
     completedAt: string | null;
     violations: unknown[];
+    personalityAnswers: PersonalityAnswer[];
   }[];
   notes: {
     authorName: string;
