@@ -68,8 +68,8 @@ export default function ListingDetailPage() {
       if (res.ok) {
         setListing({ ...listing, status: newStatus });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("[ListingDetail]", err);
     }
   }
 

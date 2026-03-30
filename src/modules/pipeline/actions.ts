@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { moveApplicationSchema } from "./schema";
 import { moveApplication as moveApplicationService } from "./service";
+import { logger } from "@/lib/logger";
 
 export async function moveApplicationAction(applicationId: string, newStage: string) {
   const parsed = moveApplicationSchema.safeParse({ applicationId, newStage });
@@ -14,7 +15,8 @@ export async function moveApplicationAction(applicationId: string, newStage: str
     await moveApplicationService(parsed.data.applicationId, parsed.data.newStage);
     revalidatePath("/candidates");
     return { success: true };
-  } catch {
+  } catch (err) {
+    logger.error("Failed to update pipeline stage", "pipeline.actions", { error: String(err) });
     return { error: "Aday aşaması güncellenirken bir hata oluştu" };
   }
 }

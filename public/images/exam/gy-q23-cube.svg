@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 170" width="450" height="170">
+  <style>
+    text { font-family: system-ui, sans-serif; font-size: 11px; fill: #374151; }
+    .title { font-size: 12px; font-weight: bold; fill: #374151; }
+  </style>
+
+  <!-- KONUM 1 -->
+  <text x="90" y="15" text-anchor="middle" class="title">KONUM 1</text>
+  <!-- Front face (Mavi) -->
+  <polygon points="30,50 120,50 120,140 30,140" fill="#3b82f6" stroke="#1e40af" stroke-width="1.5"/>
+  <text x="75" y="100" text-anchor="middle" fill="white" font-size="13" font-weight="bold">MAVİ</text>
+  <!-- Top face (Yeşil) -->
+  <polygon points="30,50 80,20 170,20 120,50" fill="#22c55e" stroke="#15803d" stroke-width="1.5"/>
+  <text x="100" y="40" text-anchor="middle" fill="white" font-size="11" font-weight="bold">YEŞİL</text>
+  <!-- Right face (Kırmızı) -->
+  <polygon points="120,50 170,20 170,110 120,140" fill="#ef4444" stroke="#b91c1c" stroke-width="1.5"/>
+  <text x="145" y="85" text-anchor="middle" fill="white" font-size="10" font-weight="bold">KIRMIZI</text>
+
+  <!-- KONUM 2 -->
+  <text x="340" y="15" text-anchor="middle" class="title">KONUM 2</text>
+  <!-- Front face (Turuncu) -->
+  <polygon points="280,50 370,50 370,140 280,140" fill="#f97316" stroke="#c2410c" stroke-width="1.5"/>
+  <text x="325" y="100" text-anchor="middle" fill="white" font-size="12" font-weight="bold">TURUNCU</text>
+  <!-- Top face (Sarı) -->
+  <polygon points="280,50 330,20 420,20 370,50" fill="#eab308" stroke="#a16207" stroke-width="1.5"/>
+  <text x="350" y="40" text-anchor="middle" fill="white" font-size="11" font-weight="bold">SARI</text>
+  <!-- Right face (Mavi) -->
+  <polygon points="370,50 420,20 420,110 370,140" fill="#3b82f6" stroke="#1e40af" stroke-width="1.5"/>
+  <text x="395" y="85" text-anchor="middle" fill="white" font-size="10" font-weight="bold">MAVİ</text>
+
+  <!-- Question -->
+  <text x="225" y="160" text-anchor="middle" font-size="12" fill="#ef4444" font-weight="bold">Mavi'nin karşısındaki renk = ?</text>
+</svg>

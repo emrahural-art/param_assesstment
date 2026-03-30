@@ -70,8 +70,8 @@ export function AssessmentSettings({ assessment }: AssessmentSettingsProps) {
         body: JSON.stringify({ isActive: !assessment.isActive }),
       });
       router.refresh();
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.error("[AssessmentSettings]", err);
     }
   }
 

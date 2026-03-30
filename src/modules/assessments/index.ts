@@ -3,4 +3,6 @@ export { getAssessments, getAssessmentById, getAssessmentForExam, getAssessmentR
 export { createAssessment, updateAssessment, deleteAssessment, addQuestion, updateQuestion, deleteQuestion, startExam, submitExam, shuffleQuestions } from "./service";
 export { createAssessmentSchema, createQuestionSchema, submitExamSchema } from "./schema";
 export { toAssessmentDTO, toQuestionDTO } from "./mapper";
+export { calculateFullResult } from "./scoring";
 export type { AssessmentDTO, QuestionDTO, CreateAssessmentInput, CreateQuestionInput, ExamAnswer, ExamViolation } from "./types";
+export type { ScoringConfig, FullScoringResult, JobFitResult, DimensionResult } from "./scoring";

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCandidateReportCard } from "@/modules/evaluation/queries";
+import { logger } from "@/lib/logger";
 
 export async function GET(
   _request: Request,
@@ -16,7 +17,8 @@ export async function GET(
       );
     }
     return NextResponse.json(report);
-  } catch {
+  } catch (err) {
+    logger.error("Failed to load candidate report", "api.candidates.report", { error: String(err) });
     return NextResponse.json(
       { error: "Veritabanı bağlantısı kurulamadı" },
       { status: 503 }

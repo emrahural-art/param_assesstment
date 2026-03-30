@@ -21,6 +21,16 @@ const envSchema = z.object({
   S3_BUCKET: z.string().optional(),
   S3_ACCESS_KEY: z.string().optional(),
   S3_SECRET_KEY: z.string().optional(),
+
+  // Google Sheets API (toplu aday import)
+  GOOGLE_SHEETS_API_KEY: z.string().optional(),
+
+  /** Go-live flags; boolean coercion in src/lib/features.ts */
+  NEXT_PUBLIC_FEATURE_CANDIDATE_JOBS: z.string().optional(),
+  NEXT_PUBLIC_FEATURE_CANDIDATE_APPLY: z.string().optional(),
+  NEXT_PUBLIC_FEATURE_COMMUNICATION: z.string().optional(),
+  NEXT_PUBLIC_FEATURE_PIPELINE: z.string().optional(),
+  NEXT_PUBLIC_FEATURE_LISTINGS: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

@@ -2,6 +2,8 @@
 
 import { signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { roleLabelsTr } from "@/lib/role-labels";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,12 +28,24 @@ export function Header() {
           <Avatar className="h-8 w-8">
             <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
-          <span className="text-sm">{session?.user?.name ?? "Kullanıcı"}</span>
+          <div className="flex flex-col items-start text-left">
+            <span className="text-sm">{session?.user?.name ?? "Kullanıcı"}</span>
+            {session?.user?.role && (
+              <Badge variant="outline" className="mt-0.5 text-[10px] font-normal px-1.5 py-0">
+                {roleLabelsTr[session.user.role] ?? session.user.role}
+              </Badge>
+            )}
+          </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem className="text-muted-foreground text-xs" disabled>
             {session?.user?.email}
           </DropdownMenuItem>
+          {session?.user?.role && (
+            <DropdownMenuItem className="text-xs" disabled>
+              Rol: {roleLabelsTr[session.user.role] ?? session.user.role}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
             Çıkış Yap
           </DropdownMenuItem>

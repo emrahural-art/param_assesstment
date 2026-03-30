@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { logger } from "@/lib/logger";
 
 const statusLabels: Record<string, string> = {
   DRAFT: "Taslak",
@@ -28,8 +29,8 @@ export default async function ListingsPage() {
   let listings: Awaited<ReturnType<typeof getListings>> = [];
   try {
     listings = await getListings();
-  } catch {
-    // DB not available
+  } catch (err) {
+    logger.error("Failed to load listings", "listings.page", { error: String(err) });
   }
 
   return (

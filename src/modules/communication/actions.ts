@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { sendEmailSchema, createTemplateSchema, bulkSendSchema } from "./schema";
 import { sendCandidateEmail, createTemplate as createTemplateService } from "./service";
+import { logger } from "@/lib/logger";
 
 export async function sendEmailAction(data: { candidateId: string; subject: string; body: string; templateId?: string }) {
   const parsed = sendEmailSchema.safeParse(data);
@@ -14,7 +15,8 @@ export async function sendEmailAction(data: { candidateId: string; subject: stri
     await sendCandidateEmail(parsed.data);
     revalidatePath("/candidates");
     return { success: true };
-  } catch {
+  } catch (err) {
+    logger.error("Failed to send email", "communication.actions", { error: String(err) });
     return { error: "E-posta gönderilirken bir hata oluştu" };
   }
 }
@@ -53,7 +55,8 @@ export async function createTemplateAction(formData: FormData) {
     await createTemplateService(parsed.data);
     revalidatePath("/settings");
     return { success: true };
-  } catch {
+  } catch (err) {
+    logger.error("Failed to create template", "communication.actions", { error: String(err) });
     return { error: "Şablon oluşturulurken bir hata oluştu" };
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { moveApplication } from "@/modules/pipeline/service";
 import { moveApplicationSchema } from "@/modules/pipeline/schema";
+import { logger } from "@/lib/logger";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,7 +19,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     const application = await moveApplication(parsed.data.applicationId, parsed.data.newStage);
     return NextResponse.json(application);
-  } catch {
+  } catch (err) {
+    logger.error("Failed to update candidate stage", "api.candidates.stage", { error: String(err) });
     return NextResponse.json({ error: "Aşama güncellenemedi" }, { status: 400 });
   }
 }

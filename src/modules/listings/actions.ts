@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createListingSchema } from "./schema";
 import { createListing as createListingService } from "./service";
+import { logger } from "@/lib/logger";
 
 export async function createListingAction(formData: FormData) {
   const raw = {
@@ -20,7 +21,8 @@ export async function createListingAction(formData: FormData) {
     await createListingService(parsed.data);
     revalidatePath("/settings");
     return { success: true };
-  } catch {
+  } catch (err) {
+    logger.error("Failed to create listing", "listings.actions", { error: String(err) });
     return { error: "İlan oluşturulurken bir hata oluştu" };
   }
 }

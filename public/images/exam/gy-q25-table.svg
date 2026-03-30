@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 130" width="380" height="130">
+  <style>
+    text { font-family: system-ui, sans-serif; font-size: 13px; fill: #374151; }
+    .header { font-weight: bold; fill: #1e3a5f; font-size: 12px; }
+    .cell { fill: white; stroke: #d1d5db; }
+    .header-bg { fill: #e0f2fe; stroke: #93c5fd; }
+  </style>
+  <!-- Header row -->
+  <rect x="10" y="10" width="120" height="30" class="header-bg"/>
+  <rect x="130" y="10" width="110" height="30" class="header-bg"/>
+  <rect x="240" y="10" width="130" height="30" class="header-bg"/>
+  <text x="70" y="30" text-anchor="middle" class="header">Ürün Grubu</text>
+  <text x="185" y="30" text-anchor="middle" class="header">Maliyet (k$)</text>
+  <text x="305" y="30" text-anchor="middle" class="header">Üretim (Adet)</text>
+
+  <!-- Hizmet -->
+  <rect x="10" y="40" width="120" height="28" class="cell"/>
+  <rect x="130" y="40" width="110" height="28" class="cell"/>
+  <rect x="240" y="40" width="130" height="28" class="cell"/>
+  <text x="70" y="59" text-anchor="middle">Hizmet</text>
+  <text x="185" y="59" text-anchor="middle">100</text>
+  <text x="305" y="59" text-anchor="middle">150</text>
+
+  <!-- Yaz?l?m -->
+  <rect x="10" y="68" width="120" height="28" class="cell"/>
+  <rect x="130" y="68" width="110" height="28" class="cell"/>
+  <rect x="240" y="68" width="130" height="28" class="cell"/>
+  <text x="70" y="87" text-anchor="middle">Yaz?l?m</text>
+  <text x="185" y="87" text-anchor="middle">200</text>
+  <text x="305" y="87" text-anchor="middle">280</text>
+
+  <!-- Donan?m -->
+  <rect x="10" y="96" width="120" height="28" class="cell"/>
+  <rect x="130" y="96" width="110" height="28" class="cell"/>
+  <rect x="240" y="96" width="130" height="28" class="cell"/>
+  <text x="70" y="115" text-anchor="middle">Donan?m</text>
+  <text x="185" y="115" text-anchor="middle">400</text>
+  <text x="305" y="115" text-anchor="middle">580</text>
+</svg>

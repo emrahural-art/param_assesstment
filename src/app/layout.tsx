@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
+import { Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const paramFont = localFont({
+  src: [
+    { path: "../../public/fonts/Param-Light.woff2", weight: "300", style: "normal" },
+    { path: "../../public/fonts/Param-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../../public/fonts/Param-Medium.woff2", weight: "500", style: "normal" },
+    { path: "../../public/fonts/Param-Bold.woff2", weight: "700", style: "normal" },
+    { path: "../../public/fonts/Param-ExtraBold.woff2", weight: "800", style: "normal" },
+  ],
+  variable: "--font-param",
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -27,7 +35,7 @@ export default function RootLayout({
   return (
     <html
       lang="tr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${paramFont.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <TooltipProvider>

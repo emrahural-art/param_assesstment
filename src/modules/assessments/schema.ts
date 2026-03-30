@@ -10,11 +10,14 @@ export const createAssessmentSchema = z.object({
 export const createQuestionSchema = z.object({
   assessmentId: z.string(),
   text: z.string().min(5, "Soru metni en az 5 karakter olmalıdır"),
-  type: z.enum(["MULTIPLE_CHOICE", "MULTI_SELECT", "TRUE_FALSE", "OPEN_ENDED", "PERSONALITY_SCALE"]),
+  type: z.enum(["MULTIPLE_CHOICE"]),
   options: z.array(z.string()).optional(),
   correctAnswer: z.string().optional(),
   points: z.coerce.number().min(0).default(1),
   order: z.coerce.number().min(0),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  imageUrl: z.string().optional(),
 });
 
 export const submitExamSchema = z.object({

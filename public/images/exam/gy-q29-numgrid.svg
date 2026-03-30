@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" width="240" height="120">
+  <style>
+    text { font-family: system-ui, sans-serif; font-size: 16px; fill: #374151; }
+    .cell { fill: white; stroke: #d1d5db; }
+    .highlight { fill: #fef3c7; stroke: #d97706; stroke-width: 1.5; }
+  </style>
+  <!-- Row 1 -->
+  <rect x="10" y="10" width="60" height="30" class="cell"/>
+  <rect x="70" y="10" width="60" height="30" class="cell"/>
+  <rect x="130" y="10" width="60" height="30" class="cell"/>
+  <text x="40" y="32" text-anchor="middle">12</text>
+  <text x="100" y="32" text-anchor="middle">36</text>
+  <text x="160" y="32" text-anchor="middle">24</text>
+
+  <!-- Row 2 -->
+  <rect x="10" y="40" width="60" height="30" class="cell"/>
+  <rect x="70" y="40" width="60" height="30" class="cell"/>
+  <rect x="130" y="40" width="60" height="30" class="cell"/>
+  <text x="40" y="62" text-anchor="middle">15</text>
+  <text x="100" y="62" text-anchor="middle">45</text>
+  <text x="160" y="62" text-anchor="middle">30</text>
+
+  <!-- Row 3 -->
+  <rect x="10" y="70" width="60" height="30" class="cell"/>
+  <rect x="70" y="70" width="60" height="30" class="highlight"/>
+  <rect x="130" y="70" width="60" height="30" class="cell"/>
+  <text x="40" y="92" text-anchor="middle">10</text>
+  <text x="100" y="92" text-anchor="middle" fill="#ef4444" font-weight="bold">?</text>
+  <text x="160" y="92" text-anchor="middle">20</text>
+</svg>

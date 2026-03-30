@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 180" width="280" height="180">
+  <style>
+    text { font-family: system-ui, sans-serif; fill: #374151; }
+    .title { font-size: 12px; font-weight: bold; }
+    .pct { font-size: 14px; font-weight: bold; }
+  </style>
+  <text x="140" y="15" text-anchor="middle" class="title">Yat?r?m B�t�esi Da??l?m?</text>
+
+  <!-- Pie chart -->
+  <!-- 60% = 216 degrees, starting from top -->
+  <path d="M140,95 L140,30 A65,65 0 1,1 83.7,122.5 Z" fill="#3b82f6" stroke="white" stroke-width="2"/>
+  <!-- 40% = 144 degrees -->
+  <path d="M140,95 L83.7,122.5 A65,65 0 0,1 140,30 Z" fill="#f97316" stroke="white" stroke-width="2"/>
+
+  <!-- Labels -->
+  <text x="175" y="85" text-anchor="middle" class="pct" fill="white">%60</text>
+  <text x="175" y="100" text-anchor="middle" font-size="10" fill="white">Teknoloji</text>
+  <text x="100" y="115" text-anchor="middle" class="pct" fill="white">%40</text>
+  <text x="100" y="130" text-anchor="middle" font-size="10" fill="white">Lojistik</text>
+
+  <!-- Note -->
+  <text x="140" y="175" text-anchor="middle" font-size="11" fill="#6b7280">Teknoloji yat?r?m? = 4.5M TL</text>
+</svg>

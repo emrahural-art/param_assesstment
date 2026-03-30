@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { uploadFile } from "@/lib/storage";
 import { db } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -37,7 +38,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, url }, { status: 201 });
-  } catch {
+  } catch (err) {
+    logger.error("Failed to upload resume", "api.upload.resume", { error: String(err) });
     return NextResponse.json(
       { error: "Dosya yüklenirken bir hata oluştu" },
       { status: 500 }

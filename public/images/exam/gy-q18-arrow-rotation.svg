@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 100" width="420" height="100">
+  <style>
+    text { font-family: system-ui, sans-serif; font-size: 11px; fill: #374151; }
+    .step { font-size: 10px; fill: #6b7280; }
+    .arrow-icon { font-size: 28px; fill: #3b82f6; }
+  </style>
+  <!-- Step 1 -->
+  <text x="40" y="20" text-anchor="middle" class="step">1. ADIM</text>
+  <text x="40" y="55" text-anchor="middle" class="arrow-icon">&#x2191;</text>
+  <text x="40" y="80" text-anchor="middle" class="step">Yukar?</text>
+
+  <!-- Step 2 -->
+  <text x="120" y="20" text-anchor="middle" class="step">2. ADIM</text>
+  <text x="120" y="55" text-anchor="middle" class="arrow-icon">&#x2192;</text>
+  <text x="120" y="80" text-anchor="middle" class="step">Sa?</text>
+
+  <!-- Step 3 -->
+  <text x="200" y="20" text-anchor="middle" class="step">3. ADIM</text>
+  <text x="200" y="55" text-anchor="middle" class="arrow-icon">&#x2193;</text>
+  <text x="200" y="80" text-anchor="middle" class="step">A?a??</text>
+
+  <!-- Step 4 (implied) -->
+  <text x="280" y="20" text-anchor="middle" class="step">4. ADIM</text>
+  <text x="280" y="55" text-anchor="middle" class="arrow-icon">&#x2190;</text>
+  <text x="280" y="80" text-anchor="middle" class="step">Sol</text>
+
+  <!-- Step 10 = ? -->
+  <text x="370" y="20" text-anchor="middle" class="step">10. ADIM</text>
+  <text x="370" y="58" text-anchor="middle" font-size="28" fill="#ef4444">?</text>
+</svg>

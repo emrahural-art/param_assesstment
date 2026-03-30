@@ -3,13 +3,14 @@ import { getPublishedListings } from "@/modules/listings/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { logger } from "@/lib/logger";
 
 export default async function JobsPage() {
   let listings: Awaited<ReturnType<typeof getPublishedListings>> = [];
   try {
     listings = await getPublishedListings();
-  } catch {
-    // DB not available
+  } catch (err) {
+    logger.error("Failed to load jobs", "jobs.page", { error: String(err) });
   }
 
   return (

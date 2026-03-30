@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,8 @@ export async function GET() {
   try {
     await db.$queryRawUnsafe("SELECT 1");
     health.database = "connected";
-  } catch {
+  } catch (err) {
+    logger.error("Database health check failed", "api.health", { error: String(err) });
     health.database = "disconnected";
     health.status = "degraded";
   }

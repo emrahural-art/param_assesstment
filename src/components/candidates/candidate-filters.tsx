@@ -42,7 +42,9 @@ export function CandidateFilters() {
   const hasFilters =
     searchParams.has("search") ||
     searchParams.has("stage") ||
-    searchParams.has("status");
+    searchParams.has("status") ||
+    searchParams.has("company") ||
+    searchParams.has("department");
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -73,6 +75,31 @@ export function CandidateFilters() {
           ))}
         </SelectContent>
       </Select>
+
+      <select
+        value={searchParams.get("company") ?? ""}
+        onChange={(e) => updateFilter("company", e.target.value || null)}
+        className="flex h-9 rounded-lg border border-input bg-transparent px-3 py-1 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
+      >
+        <option value="">Tüm Şirketler</option>
+        <option value="PARAM">Param</option>
+        <option value="PARAMTECH">ParamTech</option>
+        <option value="FINROTA">Finrota</option>
+        <option value="KREDIM">Kredim</option>
+        <option value="UNIVERA">Univera</option>
+      </select>
+
+      <Input
+        placeholder="Departman ara..."
+        defaultValue={searchParams.get("department") ?? ""}
+        onChange={(e) => {
+          const value = e.target.value;
+          if (value.length === 0 || value.length >= 2) {
+            updateFilter("department", value || null);
+          }
+        }}
+        className="w-44"
+      />
 
       <Select
         value={searchParams.get("status") ?? ""}

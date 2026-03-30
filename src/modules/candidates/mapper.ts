@@ -8,6 +8,9 @@ export function toCandidateDTO(candidate: Candidate): CandidateDTO {
     email: candidate.email,
     phone: candidate.phone,
     resumeUrl: candidate.resumeUrl,
+    company: candidate.company,
+    position: candidate.position,
+    department: candidate.department,
     status: candidate.status,
     appliedAt: candidate.createdAt.toISOString(),
   };

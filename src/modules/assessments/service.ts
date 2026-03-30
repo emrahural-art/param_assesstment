@@ -1,13 +1,35 @@
 import { db } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { eventBus } from "@/lib/events";
 import { type CreateAssessmentInput, type CreateQuestionInput, type ExamAnswer, type ExamViolation } from "./types";
+import { calculateFullResult, type ScoringConfig } from "./scoring";
 
-export async function createAssessment(input: CreateAssessmentInput) {
-  return db.assessment.create({ data: input });
+export async function createAssessment(input: CreateAssessmentInput & { scoringConfig?: ScoringConfig }) {
+  const { scoringConfig, ...data } = input;
+  return db.assessment.create({
+    data: {
+      ...data,
+      scoringConfig: scoringConfig
+        ? (scoringConfig as unknown as Prisma.InputJsonValue)
+        : undefined,
+    },
+  });
 }
 
-export async function updateAssessment(id: string, input: Partial<CreateAssessmentInput>) {
-  return db.assessment.update({ where: { id }, data: input });
+export async function updateAssessment(
+  id: string,
+  input: Partial<CreateAssessmentInput> & { scoringConfig?: ScoringConfig },
+) {
+  const { scoringConfig, ...data } = input;
+  return db.assessment.update({
+    where: { id },
+    data: {
+      ...data,
+      ...(scoringConfig !== undefined && {
+        scoringConfig: scoringConfig as unknown as Prisma.InputJsonValue,
+      }),
+    },
+  });
 }
 
 export async function deleteAssessment(id: string) {
@@ -24,6 +46,9 @@ export async function addQuestion(input: CreateQuestionInput) {
       correctAnswer: input.correctAnswer,
       points: input.points ?? 1,
       order: input.order,
+      category: input.category,
+      tags: input.tags ?? [],
+      imageUrl: input.imageUrl,
     },
   });
 }
@@ -47,7 +72,7 @@ export async function submitExam(
   candidateId: string,
   assessmentId: string,
   answers: ExamAnswer[],
-  violations?: ExamViolation[]
+  violations?: ExamViolation[],
 ) {
   const assessment = await db.assessment.findUnique({
     where: { id: assessmentId },
@@ -56,34 +81,33 @@ export async function submitExam(
 
   if (!assessment) throw new Error("Assessment not found");
 
-  let score = 0;
-  let totalPoints = 0;
+  const config = (assessment.scoringConfig as unknown as ScoringConfig) ?? {};
+  const scorable = assessment.questions;
 
-  const unscoredTypes = ["OPEN_ENDED", "PERSONALITY_SCALE"];
-
-  for (const question of assessment.questions) {
-    if (unscoredTypes.includes(question.type)) continue;
-    if (!question.correctAnswer) continue;
-
-    totalPoints += question.points;
-    const answer = answers.find((a) => a.questionId === question.id);
-    if (answer && answer.answer === question.correctAnswer) {
-      score += question.points;
-    }
-  }
+  const fullResult = calculateFullResult(scorable, answers, config);
 
   const result = await db.assessmentResult.update({
     where: { candidateId_assessmentId: { candidateId, assessmentId } },
     data: {
-      score,
-      totalPoints,
-      answers: JSON.parse(JSON.stringify(answers)),
-      violations: violations ? JSON.parse(JSON.stringify(violations)) : [],
+      score: fullResult.finalScore,
+      totalPoints: fullResult.totalPossible,
+      answers: JSON.parse(JSON.stringify(answers)) as Prisma.InputJsonValue,
+      violations: violations
+        ? (JSON.parse(JSON.stringify(violations)) as Prisma.InputJsonValue)
+        : [],
+      categoryScores: fullResult.categoryScores as unknown as Prisma.InputJsonValue,
+      level: fullResult.level,
+      jobFitResults: fullResult.jobFitResults as unknown as Prisma.InputJsonValue,
+      dimensionResults: fullResult.dimensionResults as unknown as Prisma.InputJsonValue,
       completedAt: new Date(),
     },
   });
 
-  await eventBus.emit("assessment.completed", { candidateId, assessmentId, score });
+  await eventBus.emit("assessment.completed", {
+    candidateId,
+    assessmentId,
+    score: fullResult.finalScore,
+  });
 
   return result;
 }

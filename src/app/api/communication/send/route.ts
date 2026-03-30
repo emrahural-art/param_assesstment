@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendCandidateEmail } from "@/modules/communication/service";
 import { sendEmailSchema, bulkSendSchema } from "@/modules/communication/schema";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -30,7 +31,8 @@ export async function POST(request: Request) {
       const failed = results.filter((r) => r.status === "rejected").length;
 
       return NextResponse.json({ sent, failed, total: results.length });
-    } catch {
+    } catch (err) {
+      logger.error("Failed to send bulk email", "api.communication.send", { error: String(err) });
       return NextResponse.json(
         { error: "Toplu gönderim başarısız" },
         { status: 400 }
@@ -49,7 +51,8 @@ export async function POST(request: Request) {
   try {
     const result = await sendCandidateEmail(parsed.data);
     return NextResponse.json(result, { status: 201 });
-  } catch {
+  } catch (err) {
+    logger.error("Failed to send email", "api.communication.send", { error: String(err) });
     return NextResponse.json(
       { error: "E-posta gönderilemedi" },
       { status: 400 }

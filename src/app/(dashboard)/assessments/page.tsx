@@ -3,6 +3,7 @@ import { getAssessments } from "@/modules/assessments/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { logger } from "@/lib/logger";
 
 const difficultyLabels: Record<string, string> = {
   EASY: "Kolay",
@@ -20,8 +21,8 @@ export default async function AssessmentsPage() {
   let assessments: Awaited<ReturnType<typeof getAssessments>> = [];
   try {
     assessments = await getAssessments();
-  } catch {
-    // DB not available
+  } catch (err) {
+    logger.error("Failed to load assessments", "assessments.page", { error: String(err) });
   }
 
   return (

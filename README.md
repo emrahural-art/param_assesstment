@@ -64,6 +64,8 @@ cp .env.example .env
 docker compose up -d
 ```
 
+**Özellik bayrakları (dar canlı kapsam):** `NEXT_PUBLIC_FEATURE_*` değişkenleri `.env` içinde yönetilir. Tanımsız veya `false` iken ilgili modül menüden ve URL’den kapatılır (aday ilanları, başvuru formu, iletişim merkezi, pipeline, İK ilanları). Tam özellik için `.env.example` içindeki `true` değerlerini kullanın. Ayrıntılar: `src/lib/features.ts`.
+
 ## Faydalı Komutlar
 
 ```bash

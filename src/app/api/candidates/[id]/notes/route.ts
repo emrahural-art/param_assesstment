@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createNote } from "@/modules/evaluation/service";
 import { db } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 const noteSchema = z.object({
   content: z.string().min(1),
@@ -22,7 +23,8 @@ export async function GET(
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(notes);
-  } catch {
+  } catch (err) {
+    logger.error("Failed to load notes", "api.candidates.notes.GET", { error: String(err) });
     return NextResponse.json(
       { error: "Veritabanı bağlantısı kurulamadı" },
       { status: 503 }
@@ -53,7 +55,8 @@ export async function POST(
       parsed.data.rating
     );
     return NextResponse.json(note, { status: 201 });
-  } catch {
+  } catch (err) {
+    logger.error("Failed to create note", "api.candidates.notes.POST", { error: String(err) });
     return NextResponse.json({ error: "Not eklenemedi" }, { status: 400 });
   }
 }

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 160" width="400" height="160">
+  <style>
+    text { font-family: system-ui, sans-serif; font-size: 11px; fill: #374151; }
+    .label { font-size: 10px; fill: #6b7280; }
+    .star { font-size: 18px; fill: #f59e0b; }
+  </style>
+  <!-- Start grid -->
+  <text x="55" y="15" text-anchor="middle" class="label">Ba?lang?�</text>
+  <rect x="10" y="20" width="30" height="30" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <rect x="40" y="20" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="70" y="20" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="10" y="50" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="40" y="50" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="70" y="50" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="10" y="80" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="40" y="80" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="70" y="80" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <text x="25" y="41" text-anchor="middle" class="star">&#x2605;</text>
+
+  <!-- Arrow -->
+  <text x="115" y="60" fill="#6b7280">&#x2192;</text>
+
+  <!-- Movement description -->
+  <text x="145" y="35" class="label">Kural: Her hamlede bir kare sa?a</text>
+  <text x="145" y="50" class="label">En sa?a gelince &#x2192; alt sat?r sol ba?a</text>
+  <text x="145" y="75" font-size="12" fill="#374151">Hamle 1: (1,1)&#x2192;(1,2)</text>
+  <text x="145" y="90" font-size="12" fill="#374151">Hamle 2: (1,2)&#x2192;(1,3)</text>
+  <text x="145" y="105" font-size="12" fill="#374151">Hamle 3: (1,3)&#x2192;(2,1)</text>
+  <text x="145" y="120" font-size="12" fill="#374151">Hamle 4: (2,1)&#x2192;(2,2)</text>
+  <text x="145" y="135" font-size="12" fill="#ef4444" font-weight="bold">Hamle 5: (2,2)&#x2192; ?</text>
+
+  <!-- Result grid with ? -->
+  <text x="365" y="15" text-anchor="middle" class="label">5. Hamle Sonras?</text>
+  <rect x="320" y="20" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="350" y="20" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="380" y="20" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="320" y="50" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="350" y="50" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="380" y="50" width="30" height="30" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <rect x="320" y="80" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="350" y="80" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <rect x="380" y="80" width="30" height="30" fill="#fff" stroke="#d1d5db"/>
+  <text x="395" y="71" text-anchor="middle" class="star">&#x2605;</text>
+</svg>

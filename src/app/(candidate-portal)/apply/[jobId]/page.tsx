@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { features } from "@/lib/features-env";
 
 type Listing = {
   id: string;
@@ -122,6 +123,7 @@ export default function ApplyPage() {
     };
 
     try {
+      const company = formData.get("company") as string;
       const res = await fetch("/api/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,6 +132,7 @@ export default function ApplyPage() {
           lastName: formData.get("lastName"),
           email: formData.get("email"),
           phone: formData.get("phone"),
+          company: company || undefined,
           listingId: jobId,
           cvData,
         }),
@@ -176,9 +179,11 @@ export default function ApplyPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/jobs">
-              <Button variant="outline">Diğer Pozisyonları İncele</Button>
-            </Link>
+            {features.candidateJobs && (
+              <Link href="/jobs">
+                <Button variant="outline">Diğer Pozisyonları İncele</Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -187,12 +192,14 @@ export default function ApplyPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
-      <Link
-        href="/jobs"
-        className="mb-6 inline-block text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        &larr; Açık Pozisyonlar
-      </Link>
+      {features.candidateJobs ? (
+        <Link
+          href="/jobs"
+          className="mb-6 inline-block text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          &larr; Açık Pozisyonlar
+        </Link>
+      ) : null}
 
       {listing && (
         <div className="mb-6">
@@ -230,8 +237,29 @@ export default function ApplyPage() {
                 id="phone"
                 name="phone"
                 type="tel"
-                placeholder="+90 5XX XXX XX XX"
+                pattern="(\+90\s?)?0?5\d{2}[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}"
+                title="Geçerli bir telefon numarası giriniz (örn: 05XX XXX XX XX)"
+                placeholder="05XX XXX XX XX"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company">Grup Şirketi</Label>
+              <select
+                id="company"
+                name="company"
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
+                defaultValue=""
+              >
+                <option value="">Seçiniz (opsiyonel)</option>
+                <option value="PARAM">Param</option>
+                <option value="PARAMTECH">ParamTech</option>
+                <option value="FINROTA">Finrota</option>
+                <option value="KREDIM">Kredim</option>
+                <option value="UNIVERA">Univera</option>
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Param grup şirketlerinde çalışıyorsanız veya başvuruyorsanız belirtiniz.
+              </p>
             </div>
           </CardContent>
         </Card>

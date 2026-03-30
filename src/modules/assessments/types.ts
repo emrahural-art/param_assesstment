@@ -34,6 +34,9 @@ export type CreateQuestionInput = {
   correctAnswer?: string;
   points?: number;
   order: number;
+  category?: string;
+  tags?: string[];
+  imageUrl?: string;
 };
 
 export type ExamAnswer = {

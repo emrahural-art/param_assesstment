@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createCandidateSchema } from "./schema";
 import { createCandidate as createCandidateService, updateCandidate as updateCandidateService } from "./service";
+import { logger } from "@/lib/logger";
 
 export async function createCandidateAction(formData: FormData) {
   const raw = {
@@ -29,8 +30,14 @@ export async function createCandidateAction(formData: FormData) {
 
     revalidatePath("/candidates");
     return { success: true };
-  } catch {
-    return { error: { email: ["Bu e-posta adresi zaten kayıtlı"] } };
+  } catch (err) {
+    logger.error("Failed to create candidate", "candidates.actions", { error: String(err) });
+    const isUniqueConstraint =
+      err instanceof Error && err.message.includes("Unique constraint failed");
+    if (isUniqueConstraint) {
+      return { error: { email: ["Bu e-posta adresi zaten kayıtlı"] } };
+    }
+    return { error: { email: ["Aday eklenirken bir hata oluştu"] } };
   }
 }
 
@@ -45,7 +52,8 @@ export async function updateCandidateAction(id: string, formData: FormData) {
     revalidatePath("/candidates");
     revalidatePath(`/candidates/${id}`);
     return { success: true };
-  } catch {
+  } catch (err) {
+    logger.error("Failed to update candidate", "candidates.actions", { error: String(err) });
     return { error: "Aday güncellenirken bir hata oluştu" };
   }
 }

@@ -7,6 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssessmentSettings } from "@/components/assessments/assessment-settings";
 import { QuestionManager } from "@/components/assessments/question-manager";
 import { AssessmentInvite } from "@/components/assessments/assessment-invite";
+import { ScoringConfigEditor } from "@/components/assessments/scoring-config-editor";
+import type { ScoringConfig } from "@/modules/assessments/scoring";
+import { logger } from "@/lib/logger";
 
 const difficultyLabels: Record<string, string> = {
   EASY: "Kolay",
@@ -24,13 +27,14 @@ export default async function AssessmentDetailPage({
 
   try {
     assessment = await getAssessmentById(id);
-  } catch {
-    // DB not available
+  } catch (err) {
+    logger.error("Failed to load assessment", "assessment-detail.page", { error: String(err) });
   }
 
   if (!assessment) return notFound();
 
   const totalPoints = assessment.questions.reduce((sum, q) => sum + q.points, 0);
+  const scoringConfig = (assessment.scoringConfig as unknown as ScoringConfig) ?? {};
 
   return (
     <div className="space-y-6">
@@ -89,6 +93,7 @@ export default async function AssessmentDetailPage({
       <Tabs defaultValue="questions">
         <TabsList>
           <TabsTrigger value="questions">Sorular</TabsTrigger>
+          <TabsTrigger value="scoring">Puanlama</TabsTrigger>
           <TabsTrigger value="invite">Davet Gönder</TabsTrigger>
           <TabsTrigger value="settings">Ayarlar</TabsTrigger>
         </TabsList>
@@ -96,6 +101,7 @@ export default async function AssessmentDetailPage({
         <TabsContent value="questions">
           <QuestionManager
             assessmentId={assessment.id}
+            categories={scoringConfig?.categories}
             initialQuestions={assessment.questions.map((q) => ({
               id: q.id,
               text: q.text,
@@ -104,7 +110,16 @@ export default async function AssessmentDetailPage({
               correctAnswer: q.correctAnswer,
               points: q.points,
               order: q.order,
+              category: q.category,
+              imageUrl: q.imageUrl,
             }))}
+          />
+        </TabsContent>
+
+        <TabsContent value="scoring">
+          <ScoringConfigEditor
+            assessmentId={assessment.id}
+            initialConfig={scoringConfig}
           />
         </TabsContent>
 

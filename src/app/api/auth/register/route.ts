@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { db } from "@/lib/prisma";
 import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { normalizeLoginEmail } from "@/lib/login-email";
+import { isAdminOrAbove } from "@/lib/permissions";
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -10,6 +13,11 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id || !isAdminOrAbove(session.user.role)) {
+    return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
+  }
+
   const body = await request.json();
   const parsed = registerSchema.safeParse(body);
 
@@ -17,7 +25,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
 
-  const existing = await db.user.findUnique({ where: { email: parsed.data.email } });
+  const email = normalizeLoginEmail(parsed.data.email);
+  const existing = await db.user.findUnique({ where: { email } });
   if (existing) {
     return NextResponse.json({ error: "Bu e-posta adresi zaten kayıtlı" }, { status: 409 });
   }
@@ -27,7 +36,7 @@ export async function POST(request: Request) {
   const user = await db.user.create({
     data: {
       name: parsed.data.name,
-      email: parsed.data.email,
+      email,
       passwordHash,
     },
   });

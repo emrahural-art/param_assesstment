@@ -8,6 +8,7 @@ datasource db {
 }
 
 enum UserRole {
+  SYSTEM_ADMIN
   ADMIN
   HR_MANAGER
   HR_SPECIALIST
@@ -38,10 +39,6 @@ enum ListingStatus {
 
 enum QuestionType {
   MULTIPLE_CHOICE
-  MULTI_SELECT
-  TRUE_FALSE
-  OPEN_ENDED
-  PERSONALITY_SCALE
 }
 
 enum Difficulty {
@@ -66,15 +63,33 @@ enum CommunicationStatus {
   FAILED
 }
 
+enum Company {
+  PARAM
+  PARAMTECH
+  FINROTA
+  KREDIM
+  UNIVERA
+}
+
 model User {
-  id             String          @id @default(cuid())
-  email          String          @unique
-  name           String
-  passwordHash   String
-  role           UserRole        @default(HR_SPECIALIST)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  candidateNotes CandidateNote[]
+  id               String          @id @default(cuid())
+  email            String          @unique
+  name             String
+  passwordHash     String?
+  role             UserRole        @default(HR_SPECIALIST)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  candidateNotes   CandidateNote[]
+  sentLoginInvites LoginInvite[]   @relation("UserLoginInvites")
+}
+
+model LoginInvite {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  role        UserRole
+  invitedById String
+  invitedBy   User     @relation("UserLoginInvites", fields: [invitedById], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 }
 
 model Candidate {
@@ -85,6 +100,9 @@ model Candidate {
   phone             String?
   resumeUrl         String?
   cvData            Json?
+  company           Company?
+  position          String?
+  department        String?
   status            CandidateStatus     @default(ACTIVE)
   consentAt         DateTime?
   createdAt         DateTime            @default(now())
@@ -93,6 +111,7 @@ model Candidate {
   assessmentResults AssessmentResult[]
   notes             CandidateNote[]
   communications    CommunicationLog[]
+  examInvites       ExamInvite[]
 }
 
 model Listing {
@@ -133,10 +152,12 @@ model Assessment {
   durationMinutes Int
   difficulty      Difficulty         @default(MEDIUM)
   isActive        Boolean            @default(true)
+  scoringConfig   Json?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   questions       Question[]
   results         AssessmentResult[]
+  invites         ExamInvite[]
 }
 
 model Question {
@@ -148,23 +169,54 @@ model Question {
   correctAnswer String?
   points        Int          @default(1)
   order         Int
+  category      String?
+  tags          String[]     @default([])
+  imageUrl      String?
   assessment    Assessment   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 }
 
 model AssessmentResult {
-  id           String     @id @default(cuid())
-  candidateId  String
-  assessmentId String
-  score        Int?
-  totalPoints  Int?
-  answers      Json?
-  violations   Json?
-  startedAt    DateTime   @default(now())
-  completedAt  DateTime?
-  candidate    Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  id             String     @id @default(cuid())
+  candidateId    String
+  assessmentId   String
+  score          Int?
+  totalPoints    Int?
+  answers        Json?
+  violations     Json?
+  categoryScores Json?
+  level          String?
+  jobFitResults  Json?
+  dimensionResults Json?
+  startedAt      DateTime   @default(now())
+  completedAt    DateTime?
+  candidate      Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  assessment     Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
   @@unique([candidateId, assessmentId])
+}
+
+model ExamInvite {
+  id           String       @id @default(cuid())
+  assessmentId String
+  candidateId  String
+  token        String       @unique @default(cuid())
+  status       InviteStatus @default(PENDING)
+  sentAt       DateTime?
+  expiresAt    DateTime?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime     @default(now())
+  assessment   Assessment   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  candidate    Candidate    @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, assessmentId])
+}
+
+enum InviteStatus {
+  PENDING
+  STARTED
+  COMPLETED
+  EXPIRED
 }
 
 model CandidateNote {
@@ -200,4 +252,34 @@ model CommunicationLog {
   openedAt    DateTime?
   createdAt   DateTime            @default(now())
   candidate   Candidate           @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+}
+
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  label       String
+  description String?
+  enabled     Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  userName  String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+model AppLog {
+  id        String   @id @default(cuid())
+  level     String
+  message   String
+  context   String?
+  data      Json?
+  createdAt DateTime @default(now())
 }

@@ -4,13 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { db } from "@/lib/prisma";
-
-const roleLabels: Record<string, string> = {
-  ADMIN: "Yönetici",
-  HR_MANAGER: "İK Müdürü",
-  HR_SPECIALIST: "İK Uzmanı",
-  HR_INTERN: "İK Stajyeri",
-};
+import { auth } from "@/lib/auth";
+import { getFeatureFlags, getFeatureFlagRows } from "@/lib/features";
+import { logger } from "@/lib/logger";
+import { FeatureFlagToggles } from "@/components/settings/feature-flag-toggles";
+import { roleLabelsTr as roleLabels } from "@/lib/role-labels";
 
 async function getUsers() {
   try {
@@ -31,34 +29,102 @@ async function getKvkkStats() {
       db.candidate.count({ where: { status: "ANONYMIZED" } }),
     ]);
     return { activeCount, archivedCount, anonymizedCount };
-  } catch {
+  } catch (err) {
+    logger.error("Failed to load candidate stats", "settings.page", { error: String(err) });
     return { activeCount: 0, archivedCount: 0, anonymizedCount: 0 };
   }
 }
 
 export default async function SettingsPage() {
-  const [users, kvkk] = await Promise.all([getUsers(), getKvkkStats()]);
+  const [session, users, kvkk, featureFlags, flagRows] = await Promise.all([
+    auth(),
+    getUsers(),
+    getKvkkStats(),
+    getFeatureFlags(),
+    getFeatureFlagRows(),
+  ]);
+  const role = session?.user?.role;
+  const isAdmin = role === "SYSTEM_ADMIN" || role === "ADMIN";
+  const isSysAdmin = role === "SYSTEM_ADMIN";
 
   return (
     <div className="space-y-8">
-      <h2 className="text-2xl font-bold">Sistem Ayarları</h2>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-2xl font-bold">Sistem Ayarları</h2>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Oturum rolünüz:</span>
+          <Badge variant={isSysAdmin ? "default" : "secondary"}>
+            {roleLabels[role ?? ""] ?? role ?? "—"}
+          </Badge>
+        </div>
+      </div>
+
+      {!isSysAdmin && (
+        <Card className="border-amber-200 bg-amber-50/80 dark:bg-amber-950/20 dark:border-amber-900">
+          <CardContent className="pt-6 text-sm">
+            <p className="font-medium text-amber-950 dark:text-amber-100">
+              Modül anahtarları ve sistem logları
+            </p>
+            <p className="mt-1 text-amber-900/90 dark:text-amber-200/90">
+              Sol menüdeki modülleri açıp kapatma ve &quot;Sistem Logları&quot; ekranı yalnızca{" "}
+              <strong>Sistem Yöneticisi</strong> rolüne açıktır. Hesabınız veritabanında bu rol ile
+              tanımlıysa rol bilgisi oturumda otomatik güncellenir; görmüyorsanız bir kez çıkış yapıp
+              yeniden giriş yapın veya yöneticiden rol ataması isteyin.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* SYSTEM_ADMIN: Feature Flags */}
+      {isSysAdmin && (
+        <>
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Modül Yönetimi</h3>
+            <p className="text-sm text-muted-foreground">
+              Aşağıdaki anahtarlar sol menüdeki modülleri (Pipeline, İlanlar, İletişim vb.) ve ilgili
+              sayfaları gösterir veya gizler. Kapalı modüllere doğrudan URL ile girildiğinde ortam
+              değişkeni (NEXT_PUBLIC_*) da açıksa yine erişilebilir; tam kapatma için env ile birlikte
+              kullanın.
+            </p>
+            {flagRows.length === 0 && (
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                Veritabanında özellik bayrağı yok. Yerelde:{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs">npx prisma db seed</code>{" "}
+                çalıştırın.
+              </p>
+            )}
+            <FeatureFlagToggles
+              initialFlags={flagRows.map((f) => ({
+                id: f.id,
+                key: f.key,
+                label: f.label,
+                description: f.description,
+                enabled: f.enabled,
+              }))}
+            />
+          </div>
+          <Separator />
+        </>
+      )}
 
       {/* User Management */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Kullanıcı Yönetimi</h3>
-          <Link href="/settings/users/new">
-            <Button variant="outline" size="sm">
-              Kullanıcı Ekle
-            </Button>
-          </Link>
+          {isAdmin && (
+            <Link href="/settings/users/new">
+              <Button variant="outline" size="sm">
+                Kullanıcı davet et
+              </Button>
+            </Link>
+          )}
         </div>
 
         {users.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
-              Henüz kullanıcı yok. İlk kullanıcıyı kayıt sayfasından
-              oluşturabilirsiniz.
+              Henüz kullanıcı yok. Yönetici Google ile giriş yaparak veya şifreli
+              hesapla oturum açarak kullanıcıları davet edebilir.
             </CardContent>
           </Card>
         ) : (
@@ -161,26 +227,42 @@ export default async function SettingsPage() {
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Hızlı Erişim</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Link href="/communication">
-            <Card className="transition-shadow hover:shadow-md">
-              <CardContent className="pt-6">
-                <p className="font-medium">E-posta Şablonları</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Şablonları düzenle ve yeni şablonlar oluştur
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link href="/pipeline">
-            <Card className="transition-shadow hover:shadow-md">
-              <CardContent className="pt-6">
-                <p className="font-medium">Pipeline Aşamaları</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Aday takip sürecini görüntüle
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
+          {featureFlags.communication && (
+            <Link href="/communication">
+              <Card className="transition-shadow hover:shadow-md">
+                <CardContent className="pt-6">
+                  <p className="font-medium">E-posta Şablonları</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Şablonları düzenle ve yeni şablonlar oluştur
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+          {featureFlags.pipeline && (
+            <Link href="/pipeline">
+              <Card className="transition-shadow hover:shadow-md">
+                <CardContent className="pt-6">
+                  <p className="font-medium">Pipeline Aşamaları</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Aday takip sürecini görüntüle
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+          {isSysAdmin && (
+            <Link href="/settings/logs">
+              <Card className="transition-shadow hover:shadow-md">
+                <CardContent className="pt-6">
+                  <p className="font-medium">Sistem Logları</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Kullanıcı işlemleri ve hata loglarını incele
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
           <Link href="/api/health">
             <Card className="transition-shadow hover:shadow-md">
               <CardContent className="pt-6">

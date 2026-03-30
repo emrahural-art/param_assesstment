@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,32 +23,20 @@ type Question = {
   correctAnswer: string | null;
   points: number;
   order: number;
+  category: string | null;
+  imageUrl: string | null;
 };
-
-const typeLabels: Record<string, string> = {
-  MULTIPLE_CHOICE: "Çoktan Seçmeli",
-  MULTI_SELECT: "Çoklu Seçim",
-  TRUE_FALSE: "Doğru/Yanlış",
-  OPEN_ENDED: "Açık Uçlu",
-  PERSONALITY_SCALE: "Kişilik Ölçeği",
-};
-
-const LIKERT_OPTIONS = [
-  "Kesinlikle Katılmıyorum",
-  "Katılmıyorum",
-  "Kararsızım",
-  "Katılıyorum",
-  "Kesinlikle Katılıyorum",
-];
 
 interface QuestionManagerProps {
   assessmentId: string;
   initialQuestions: Question[];
+  categories?: string[];
 }
 
 export function QuestionManager({
   assessmentId,
   initialQuestions,
+  categories = [],
 }: QuestionManagerProps) {
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>(initialQuestions);
@@ -58,17 +46,21 @@ export function QuestionManager({
   const [error, setError] = useState("");
 
   const [text, setText] = useState("");
-  const [type, setType] = useState("MULTIPLE_CHOICE");
-  const [options, setOptions] = useState<string[]>(["", "", "", ""]);
+  const [options, setOptions] = useState<string[]>(["", "", "", "", ""]);
   const [correctAnswer, setCorrectAnswer] = useState("");
   const [points, setPoints] = useState(1);
+  const [category, setCategory] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function resetForm() {
     setText("");
-    setType("MULTIPLE_CHOICE");
-    setOptions(["", "", "", ""]);
+    setOptions(["", "", "", "", ""]);
     setCorrectAnswer("");
     setPoints(1);
+    setCategory("");
+    setImageUrl("");
     setEditingQuestion(null);
     setError("");
   }
@@ -80,12 +72,38 @@ export function QuestionManager({
 
   function openEdit(q: Question) {
     setText(q.text);
-    setType(q.type);
-    setOptions(q.options ?? ["", "", "", ""]);
+    setOptions(q.options && q.options.length > 0 ? q.options : ["", "", "", "", ""]);
     setCorrectAnswer(q.correctAnswer ?? "");
     setPoints(q.points);
+    setCategory(q.category ?? "");
+    setImageUrl(q.imageUrl ?? "");
     setEditingQuestion(q);
     setDialogOpen(true);
+  }
+
+  async function handleImageUpload(file: File) {
+    setUploading(true);
+    setError("");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload/question-image", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error ?? `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      setImageUrl(data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Görsel yüklenemedi");
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function handleSave() {
@@ -94,25 +112,16 @@ export function QuestionManager({
 
     const filteredOptions = options.filter((o) => o.trim() !== "");
 
-    const resolvedOptions =
-      type === "OPEN_ENDED"
-        ? []
-        : type === "TRUE_FALSE"
-          ? ["Doğru", "Yanlış"]
-          : type === "PERSONALITY_SCALE"
-            ? LIKERT_OPTIONS
-            : filteredOptions;
-
     const body = {
       text,
-      type,
-      options: resolvedOptions,
-      correctAnswer: type === "OPEN_ENDED" || type === "PERSONALITY_SCALE" ? undefined : correctAnswer || undefined,
-      points: type === "PERSONALITY_SCALE" ? 0 : points,
+      type: "MULTIPLE_CHOICE",
+      options: filteredOptions,
+      correctAnswer: correctAnswer || undefined,
+      points,
       order: editingQuestion ? editingQuestion.order : questions.length,
+      category: category || undefined,
+      imageUrl: imageUrl || undefined,
     };
-
-    console.log("[QuestionManager] Saving:", { assessmentId, body });
 
     try {
       if (editingQuestion) {
@@ -192,8 +201,8 @@ export function QuestionManager({
 
       setQuestions((prev) => prev.filter((q) => q.id !== questionId));
       router.refresh();
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.error("[QuestionManager]", err);
     }
   }
 
@@ -222,63 +231,113 @@ export function QuestionManager({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Soru Tipi</Label>
-                  <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                    className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
+              <div className="space-y-2">
+                <Label>Soru Görseli (Opsiyonel)</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file);
+                      e.target.value = "";
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={uploading}
+                    onClick={() => fileInputRef.current?.click()}
                   >
-                    <option value="MULTIPLE_CHOICE">Çoktan Seçmeli</option>
-                    <option value="MULTI_SELECT">Çoklu Seçim</option>
-                    <option value="TRUE_FALSE">Doğru/Yanlış</option>
-                    <option value="OPEN_ENDED">Açık Uçlu</option>
-                    <option value="PERSONALITY_SCALE">Kişilik Ölçeği (Likert)</option>
-                  </select>
+                    {uploading ? "Yükleniyor..." : imageUrl ? "Görseli Değiştir" : "Görsel Yükle"}
+                  </Button>
+                  {imageUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive"
+                      onClick={() => setImageUrl("")}
+                    >
+                      Kaldır
+                    </Button>
+                  )}
                 </div>
-
-                {type !== "PERSONALITY_SCALE" && (
-                  <div className="space-y-2">
-                    <Label>Puan</Label>
-                    <Input
-                      type="number"
-                      min={type === "OPEN_ENDED" ? 0 : 1}
-                      value={points}
-                      onChange={(e) => setPoints(parseInt(e.target.value, 10) || 1)}
+                {imageUrl && (
+                  <div className="mt-2 rounded-lg border bg-white p-2">
+                    <img
+                      src={imageUrl}
+                      alt="Soru görseli"
+                      className="max-h-40 rounded"
                     />
                   </div>
                 )}
               </div>
 
-              {(type === "MULTIPLE_CHOICE" || type === "MULTI_SELECT") && (
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Seçenekler</Label>
-                  {options.map((opt, i) => (
-                    <div key={i} className="flex gap-2">
-                      <Input
-                        value={opt}
-                        onChange={(e) => {
-                          const newOpts = [...options];
-                          newOpts[i] = e.target.value;
-                          setOptions(newOpts);
-                        }}
-                        placeholder={`Seçenek ${i + 1}`}
-                      />
-                      {options.length > 2 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setOptions(options.filter((_, j) => j !== i))
-                          }
-                        >
-                          ✕
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                  <Label>Puan</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={points}
+                    onChange={(e) => setPoints(parseInt(e.target.value, 10) || 1)}
+                  />
+                </div>
+
+                {categories.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Kategori</Label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
+                    >
+                      <option value="">Kategori seçin</option>
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Seçenekler</Label>
+                {options.map((opt, i) => (
+                  <div key={i} className="flex gap-2">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded border bg-muted text-xs font-medium">
+                      {String.fromCharCode(65 + i)}
+                    </span>
+                    <Input
+                      value={opt}
+                      onChange={(e) => {
+                        const newOpts = [...options];
+                        newOpts[i] = e.target.value;
+                        setOptions(newOpts);
+                      }}
+                      placeholder={`Seçenek ${String.fromCharCode(65 + i)}`}
+                    />
+                    {options.length > 2 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setOptions(options.filter((_, j) => j !== i))
+                        }
+                      >
+                        ✕
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                {options.length < 6 && (
                   <Button
                     type="button"
                     variant="outline"
@@ -287,50 +346,26 @@ export function QuestionManager({
                   >
                     + Seçenek Ekle
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
 
-              {type === "PERSONALITY_SCALE" && (
-                <div className="rounded-lg border bg-muted/50 p-3">
-                  <p className="text-sm font-medium mb-2">Likert Ölçeği (5'li)</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {LIKERT_OPTIONS.map((opt) => (
-                      <span
-                        key={opt}
-                        className="inline-flex items-center rounded-md border bg-background px-2.5 py-1 text-xs"
-                      >
-                        {opt}
-                      </span>
+              <div className="space-y-2">
+                <Label>Doğru Cevap</Label>
+                <select
+                  value={correctAnswer}
+                  onChange={(e) => setCorrectAnswer(e.target.value)}
+                  className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
+                >
+                  <option value="">Doğru cevabı seçin</option>
+                  {options
+                    .filter((o) => o.trim() !== "")
+                    .map((opt, i) => (
+                      <option key={i} value={opt}>
+                        {String.fromCharCode(65 + i)}) {opt}
+                      </option>
                     ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Doğru/yanlış cevap yoktur, adayın yanıtı profil olarak kaydedilir.
-                  </p>
-                </div>
-              )}
-
-              {type !== "OPEN_ENDED" && type !== "PERSONALITY_SCALE" && (
-                <div className="space-y-2">
-                  <Label>Doğru Cevap</Label>
-                  {type === "TRUE_FALSE" ? (
-                    <select
-                      value={correctAnswer}
-                      onChange={(e) => setCorrectAnswer(e.target.value)}
-                      className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
-                    >
-                      <option value="">Seçin</option>
-                      <option value="Doğru">Doğru</option>
-                      <option value="Yanlış">Yanlış</option>
-                    </select>
-                  ) : (
-                    <Input
-                      value={correctAnswer}
-                      onChange={(e) => setCorrectAnswer(e.target.value)}
-                      placeholder="Doğru cevabı girin (seçenek metni ile aynı)"
-                    />
-                  )}
-                </div>
-              )}
+                </select>
+              </div>
 
               {error && <p className="text-sm text-destructive">{error}</p>}
 
@@ -368,17 +403,24 @@ export function QuestionManager({
                       {index + 1}
                     </span>
                     <div>
-                      <p className="font-medium">{q.text}</p>
+                      <p className="font-medium whitespace-pre-line">{q.text}</p>
+                      {q.imageUrl && (
+                        <img
+                          src={q.imageUrl}
+                          alt=""
+                          className="mt-2 max-h-24 rounded border"
+                        />
+                      )}
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs">
-                          {typeLabels[q.type] ?? q.type}
-                        </Badge>
-                        {q.type !== "PERSONALITY_SCALE" && (
-                          <span className="text-xs text-muted-foreground">
-                            {q.points} puan
-                          </span>
+                        {q.category && (
+                          <Badge variant="outline" className="text-xs">
+                            {q.category}
+                          </Badge>
                         )}
-                        {!q.correctAnswer && q.type !== "PERSONALITY_SCALE" && q.type !== "OPEN_ENDED" && (
+                        <span className="text-xs text-muted-foreground">
+                          {q.points} puan
+                        </span>
+                        {!q.correctAnswer && (
                           <span className="text-xs text-amber-600">
                             Doğru cevap belirtilmemiş
                           </span>
@@ -412,16 +454,13 @@ export function QuestionManager({
                       <span
                         key={i}
                         className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs ${
-                          q.type === "PERSONALITY_SCALE"
-                            ? "bg-blue-50 border-blue-200 text-blue-800"
-                            : opt === q.correctAnswer
-                              ? "border-green-300 bg-green-50 text-green-800"
-                              : "bg-muted/50"
+                          opt === q.correctAnswer
+                            ? "border-green-300 bg-green-50 text-green-800"
+                            : "bg-muted/50"
                         }`}
                       >
-                        {q.type === "PERSONALITY_SCALE" && `${i + 1}. `}
-                        {opt}
-                        {q.type !== "PERSONALITY_SCALE" && opt === q.correctAnswer && " ✓"}
+                        {String.fromCharCode(65 + i)}) {opt}
+                        {opt === q.correctAnswer && " ✓"}
                       </span>
                     ))}
                   </div>

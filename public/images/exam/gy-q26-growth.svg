@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 180" width="350" height="180">
+  <style>
+    text { font-family: system-ui, sans-serif; font-size: 11px; fill: #374151; }
+    .axis-label { font-size: 10px; fill: #6b7280; }
+    .title { font-size: 12px; font-weight: bold; }
+  </style>
+  <text x="175" y="15" text-anchor="middle" class="title">Aday Havuzu Büyümesi</text>
+
+  <!-- Y axis -->
+  <line x1="40" y1="30" x2="40" y2="150" stroke="#d1d5db" stroke-width="1"/>
+  <text x="20" y="95" text-anchor="middle" class="axis-label" transform="rotate(-90,20,95)">Aday</text>
+
+  <!-- X axis -->
+  <line x1="40" y1="150" x2="320" y2="150" stroke="#d1d5db" stroke-width="1"/>
+  <text x="180" y="170" text-anchor="middle" class="axis-label">Ay</text>
+
+  <!-- Growth curve (exponential) -->
+  <path d="M50,140 Q100,138 140,130 Q180,118 210,95 Q240,65 270,30 Q290,15 310,5"
+        fill="none" stroke="#3b82f6" stroke-width="2.5"/>
+
+  <!-- Data points -->
+  <circle cx="50" cy="140" r="3" fill="#3b82f6"/>
+  <circle cx="100" cy="136" r="3" fill="#3b82f6"/>
+  <circle cx="140" cy="130" r="3" fill="#3b82f6"/>
+  <circle cx="180" cy="118" r="3" fill="#3b82f6"/>
+  <circle cx="210" cy="95" r="3" fill="#3b82f6"/>
+  <circle cx="240" cy="65" r="3" fill="#3b82f6"/>
+  <circle cx="270" cy="30" r="3" fill="#3b82f6"/>
+
+  <!-- Month labels -->
+  <text x="50" y="162" text-anchor="middle" class="axis-label">1</text>
+  <text x="100" y="162" text-anchor="middle" class="axis-label">2</text>
+  <text x="140" y="162" text-anchor="middle" class="axis-label">3</text>
+  <text x="180" y="162" text-anchor="middle" class="axis-label">4</text>
+  <text x="210" y="162" text-anchor="middle" class="axis-label">5</text>
+  <text x="240" y="162" text-anchor="middle" class="axis-label">6</text>
+  <text x="270" y="162" text-anchor="middle" class="axis-label">7</text>
+</svg>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -12,7 +13,8 @@ export async function GET() {
     });
 
     return NextResponse.json(applications);
-  } catch {
+  } catch (err) {
+    logger.error("Failed to load pipeline applications", "api.pipeline.applications", { error: String(err) });
     return NextResponse.json(
       { error: "Veritabanı bağlantısı kurulamadı" },
       { status: 503 }

@@ -3,11 +3,17 @@ import { notFound } from "next/navigation";
 import { getCandidateById } from "@/modules/candidates/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CandidateHeader } from "@/components/candidates/candidate-header";
+import { AnswerKeySection } from "@/components/candidates/answer-key-section";
+import { logger } from "@/lib/logger";
+/* PHASE_2: Başvurular, CV, Notlar, İletişim tab'ları açıldığında gerekecek
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddNoteForm } from "@/components/candidates/add-note-form";
+*/
 
+/* PHASE_2: Başvurular tab'ı açıldığında gerekecek
 const stageLabels: Record<string, string> = {
   NEW_APPLICATION: "Yeni Başvuru",
   SCREENING: "Ön Eleme",
@@ -17,6 +23,270 @@ const stageLabels: Record<string, string> = {
   HIRED: "İşe Alındı",
   REJECTED: "Reddedildi",
 };
+*/
+
+const inviteStatusLabels: Record<string, string> = {
+  PENDING: "Bekliyor",
+  STARTED: "Başladı",
+  COMPLETED: "Tamamlandı",
+  EXPIRED: "Süresi Dolmuş",
+};
+
+const inviteStatusColors: Record<string, string> = {
+  PENDING: "bg-yellow-100 text-yellow-800",
+  STARTED: "bg-blue-100 text-blue-800",
+  COMPLETED: "bg-green-100 text-green-800",
+  EXPIRED: "bg-gray-100 text-gray-800",
+};
+
+function formatDate(date: Date | string | null | undefined) {
+  if (!date) return null;
+  return new Date(date).toLocaleDateString("tr-TR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+type InviteData = {
+  id: string;
+  assessmentId: string;
+  status: string;
+  sentAt: Date | null;
+  startedAt: Date | null;
+  completedAt: Date | null;
+  createdAt: Date;
+  assessment: { id: string; title: string };
+};
+
+type QuestionData = {
+  id: string;
+  text: string;
+  options: unknown;
+  correctAnswer: string | null;
+  category: string | null;
+  points: number;
+  order: number;
+};
+
+type ResultData = {
+  id: string;
+  assessmentId: string;
+  score: number | null;
+  totalPoints: number | null;
+  level: string | null;
+  completedAt: Date | null;
+  categoryScores: unknown;
+  jobFitResults: unknown;
+  dimensionResults: unknown;
+  answers: unknown;
+  assessment: { title: string; questions: QuestionData[] };
+};
+
+function TestLifecycleSection({
+  examInvites,
+  assessmentResults,
+}: {
+  examInvites: InviteData[];
+  assessmentResults: ResultData[];
+}) {
+  const resultsByAssessment = new Map<string, ResultData>();
+  for (const r of assessmentResults) {
+    resultsByAssessment.set(r.assessmentId, r);
+  }
+
+  const seenAssessmentIds = new Set<string>();
+
+  type MergedItem = {
+    key: string;
+    title: string;
+    invite: InviteData | null;
+    result: ResultData | null;
+  };
+
+  const merged: MergedItem[] = [];
+
+  for (const inv of examInvites) {
+    seenAssessmentIds.add(inv.assessmentId);
+    merged.push({
+      key: `inv-${inv.id}`,
+      title: inv.assessment.title,
+      invite: inv,
+      result: resultsByAssessment.get(inv.assessmentId) ?? null,
+    });
+  }
+
+  for (const res of assessmentResults) {
+    if (!seenAssessmentIds.has(res.assessmentId)) {
+      merged.push({
+        key: `res-${res.id}`,
+        title: res.assessment.title,
+        invite: null,
+        result: res,
+      });
+    }
+  }
+
+  if (merged.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Testler</h3>
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            Henüz test daveti veya sonucu yok.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Testler</h3>
+      {merged.map(({ key, title, invite, result }) => {
+        const catScores = result?.categoryScores as Record<string, number> | null;
+        const jobFit = result?.jobFitResults as { role: string; result: string }[] | null;
+        const dims = result?.dimensionResults as { name: string; label: string }[] | null;
+
+        return (
+          <Card key={key}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">{title}</CardTitle>
+                <div className="flex items-center gap-2">
+                  {invite && (
+                    <Badge
+                      className={`text-xs ${inviteStatusColors[invite.status] ?? ""}`}
+                      variant="outline"
+                    >
+                      {inviteStatusLabels[invite.status] ?? invite.status}
+                    </Badge>
+                  )}
+                  {result?.level && (
+                    <Badge variant="default">{result.level}</Badge>
+                  )}
+                  {result?.score !== null && result?.score !== undefined &&
+                    result?.totalPoints !== null && result?.totalPoints !== undefined && (
+                    <span className="text-lg font-bold">
+                      {result.score}/{result.totalPoints}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Timeline */}
+              <div className="space-y-2">
+                {invite && (
+                  <>
+                    <div className="flex items-center gap-3 text-sm">
+                      <span className="w-2 h-2 rounded-full bg-muted-foreground shrink-0" />
+                      <span className="text-muted-foreground w-24 shrink-0">Davet</span>
+                      <span>{formatDate(invite.createdAt)}</span>
+                      {invite.sentAt ? (
+                        <Badge variant="outline" className="text-xs bg-emerald-100 text-emerald-800 ml-auto">
+                          E-posta Gönderildi
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800 ml-auto">
+                          E-posta Bekliyor
+                        </Badge>
+                      )}
+                    </div>
+                    {invite.startedAt && (
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                        <span className="text-muted-foreground w-24 shrink-0">Başlangıç</span>
+                        <span>{formatDate(invite.startedAt)}</span>
+                      </div>
+                    )}
+                    {invite.completedAt && (
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                        <span className="text-muted-foreground w-24 shrink-0">Tamamlandı</span>
+                        <span>{formatDate(invite.completedAt)}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+                {!invite && result?.completedAt && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                    <span className="text-muted-foreground w-24 shrink-0">Tamamlandı</span>
+                    <span>{formatDate(result.completedAt)}</span>
+                  </div>
+                )}
+                {!invite && !result?.completedAt && result && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                    <span className="text-muted-foreground w-24 shrink-0">Durum</span>
+                    <span>Devam ediyor</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Score details */}
+              {catScores && Object.keys(catScores).length > 0 && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Kategori Puanları</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    {Object.entries(catScores).map(([cat, score]) => (
+                      <div
+                        key={cat}
+                        className="rounded-lg border px-3 py-2 text-center"
+                      >
+                        <p className="text-xs text-muted-foreground">{cat}</p>
+                        <p className="text-lg font-bold">{score}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {jobFit && jobFit.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Pozisyon Uygunluğu</p>
+                  <div className="flex flex-wrap gap-2">
+                    {jobFit.map((jf, i) => (
+                      <Badge
+                        key={i}
+                        variant={jf.result === "UYGUN" ? "default" : "destructive"}
+                      >
+                        {jf.role}: {jf.result}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {dims && dims.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Boyut Değerlendirmesi</p>
+                  <div className="flex flex-wrap gap-2">
+                    {dims.map((d, i) => (
+                      <Badge key={i} variant="outline">
+                        {d.name}: {d.label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {result && result.assessment.questions.length > 0 && (
+                <AnswerKeySection
+                  questions={result.assessment.questions as { id: string; text: string; options: string[] | null; correctAnswer: string | null; category: string | null; points: number; order: number }[]}
+                  answers={(result.answers as { questionId: string; answer: string }[]) ?? []}
+                />
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
 
 export default async function CandidateDetailPage({
   params,
@@ -28,13 +298,11 @@ export default async function CandidateDetailPage({
 
   try {
     candidate = await getCandidateById(id);
-  } catch {
-    // DB not available
+  } catch (err) {
+    logger.error("Failed to load candidate", "candidate-detail.page", { error: String(err), candidateId: id });
   }
 
   if (!candidate) return notFound();
-
-  const cvData = candidate.cvData as Record<string, unknown> | null;
 
   return (
     <div className="space-y-6">
@@ -45,302 +313,92 @@ export default async function CandidateDetailPage({
         &larr; Adaylar
       </Link>
 
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">
-            {candidate.firstName} {candidate.lastName}
-          </h2>
-          <p className="text-muted-foreground">{candidate.email}</p>
-          {candidate.phone && (
-            <p className="text-sm text-muted-foreground">{candidate.phone}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href={`/candidates/${candidate.id}/report`}>
-            <Button variant="outline" size="sm">
-              360° Karne
-            </Button>
-          </Link>
-          <Badge variant={candidate.status === "ACTIVE" ? "default" : "secondary"}>
-            {candidate.status === "ACTIVE" ? "Aktif" : candidate.status}
-          </Badge>
-        </div>
-      </div>
+      {/* Künye */}
+      <CandidateHeader candidate={candidate} />
+      {/* PHASE_2: Evaluation modülü aktif olduğunda açılacak
+      <Link href={`/candidates/${candidate.id}/report`}>
+        <Button variant="outline" size="sm">
+          360° Karne
+        </Button>
+      </Link>
+      */}
 
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Genel Bakış</TabsTrigger>
-          <TabsTrigger value="cv">CV Bilgileri</TabsTrigger>
-          <TabsTrigger value="tests">Testler</TabsTrigger>
-          <TabsTrigger value="notes">Notlar</TabsTrigger>
-          <TabsTrigger value="communication">İletişim</TabsTrigger>
-        </TabsList>
+      {/* Testler - Lifecycle */}
+      <TestLifecycleSection
+        examInvites={candidate.examInvites}
+        assessmentResults={candidate.assessmentResults}
+      />
 
-        {/* Genel Bakış */}
-        <TabsContent value="overview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Başvurular</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {candidate.applications.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Başvuru yok.</p>
-              ) : (
-                <div className="space-y-3">
-                  {candidate.applications.map((app) => (
-                    <div
-                      key={app.id}
-                      className="flex items-center justify-between rounded-lg border p-3"
-                    >
-                      <div>
-                        <p className="font-medium">{app.listing.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(app.appliedAt).toLocaleDateString("tr-TR")}
-                        </p>
-                      </div>
-                      <Badge variant="secondary">
-                        {stageLabels[app.stage] ?? app.stage}
-                      </Badge>
+      {/* PHASE_2: Başvurular (Genel Bakış tab'ı)
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Başvurular</h3>
+        <Card>
+          <CardContent>
+            {candidate.applications.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Başvuru yok.</p>
+            ) : (
+              <div className="space-y-3">
+                {candidate.applications.map((app) => (
+                  <div
+                    key={app.id}
+                    className="flex items-center justify-between rounded-lg border p-3"
+                  >
+                    <div>
+                      <p className="font-medium">{app.listing.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(app.appliedAt).toLocaleDateString("tr-TR")}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {candidate.resumeUrl && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">CV Dosyası</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <a
-                  href={candidate.resumeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline"
-                >
-                  CV&apos;yi İndir / Görüntüle
-                </a>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* CV Bilgileri */}
-        <TabsContent value="cv" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Eğitim</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {(cvData?.education as Array<Record<string, string>>)?.length ? (
-                <div className="space-y-3">
-                  {(cvData!.education as Array<Record<string, string>>).map(
-                    (edu, i) => (
-                      <div key={i} className="rounded-lg border p-3">
-                        <p className="font-medium">{edu.school}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {edu.degree} - {edu.field}
-                        </p>
-                        {edu.graduationYear && (
-                          <p className="text-xs text-muted-foreground">
-                            Mezuniyet: {edu.graduationYear}
-                          </p>
-                        )}
-                      </div>
-                    )
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Eğitim bilgisi girilmemiş.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">İş Deneyimi</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {(cvData?.experience as Array<Record<string, string>>)?.length ? (
-                <div className="space-y-3">
-                  {(cvData!.experience as Array<Record<string, string>>).map(
-                    (exp, i) => (
-                      <div key={i} className="rounded-lg border p-3">
-                        <p className="font-medium">{exp.title}</p>
-                        <p className="text-sm">{exp.company}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {exp.startDate} - {exp.endDate || "Devam ediyor"}
-                        </p>
-                        {exp.description && (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {exp.description}
-                          </p>
-                        )}
-                      </div>
-                    )
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Deneyim bilgisi girilmemiş.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {(cvData?.skills as string[])?.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Yetenekler</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {(cvData!.skills as string[]).map((skill, i) => (
-                    <Badge key={i} variant="secondary">
-                      {skill}
+                    <Badge variant="secondary">
+                      {stageLabels[app.stage] ?? app.stage}
                     </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* Testler */}
-        <TabsContent value="tests" className="space-y-4">
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        {candidate.resumeUrl && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Test Sonuçları</CardTitle>
+              <CardTitle className="text-lg">CV Dosyası</CardTitle>
             </CardHeader>
             <CardContent>
-              {candidate.assessmentResults.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Henüz test sonucu yok.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {candidate.assessmentResults.map((result) => (
-                    <div
-                      key={result.id}
-                      className="flex items-center justify-between rounded-lg border p-3"
-                    >
-                      <div>
-                        <p className="font-medium">{result.assessment.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {result.completedAt
-                            ? new Date(result.completedAt).toLocaleDateString("tr-TR")
-                            : "Devam ediyor"}
-                        </p>
-                      </div>
-                      {result.score !== null && result.totalPoints !== null && (
-                        <span className="text-lg font-bold">
-                          {result.score}/{result.totalPoints}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+              <a
+                href={candidate.resumeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline"
+              >
+                CV&apos;yi İndir / Görüntüle
+              </a>
             </CardContent>
           </Card>
-        </TabsContent>
+        )}
+      </div>
+      */}
 
-        {/* Notlar */}
-        <TabsContent value="notes" className="space-y-4">
-          <AddNoteForm candidateId={candidate.id} />
+      {/* PHASE_2: CV Bilgileri tab'ı
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">CV Bilgileri</h3>
+        ... eğitim, deneyim, yetenekler ...
+      </div>
+      */}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Mülakat Notları</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {candidate.notes.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Henüz not eklenmemiş.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {candidate.notes.map((note) => (
-                    <div key={note.id} className="rounded-lg border p-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">
-                          {note.user.name}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {note.rating && (
-                            <Badge variant="secondary">{note.rating}/10</Badge>
-                          )}
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(note.createdAt).toLocaleDateString("tr-TR")}
-                          </span>
-                        </div>
-                      </div>
-                      <Separator className="my-2" />
-                      <p className="text-sm">{note.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+      {/* PHASE_2: Mülakat Notları tab'ı
+      <AddNoteForm candidateId={candidate.id} />
+      <Card>
+        <CardHeader><CardTitle>Mülakat Notları</CardTitle></CardHeader>
+        <CardContent>... notlar ...</CardContent>
+      </Card>
+      */}
 
-        {/* İletişim */}
-        <TabsContent value="communication" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">İletişim Geçmişi</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {candidate.communications.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Henüz iletişim kaydı yok.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {candidate.communications.map((comm) => (
-                    <div
-                      key={comm.id}
-                      className="flex items-center justify-between rounded-lg border p-3"
-                    >
-                      <div>
-                        <p className="font-medium text-sm">{comm.subject}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {comm.sentAt
-                            ? new Date(comm.sentAt).toLocaleDateString("tr-TR")
-                            : "Gönderilmedi"}
-                        </p>
-                      </div>
-                      <Badge
-                        variant={
-                          comm.status === "OPENED"
-                            ? "default"
-                            : comm.status === "SENT"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                      >
-                        {comm.status === "OPENED"
-                          ? "Açıldı"
-                          : comm.status === "SENT"
-                            ? "Gönderildi"
-                            : comm.status === "QUEUED"
-                              ? "Kuyrukta"
-                              : "Hata"}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* PHASE_2: İletişim Geçmişi tab'ı
+      <Card>
+        <CardHeader><CardTitle>İletişim Geçmişi</CardTitle></CardHeader>
+        <CardContent>... iletişim logları ...</CardContent>
+      </Card>
+      */}
     </div>
   );
 }

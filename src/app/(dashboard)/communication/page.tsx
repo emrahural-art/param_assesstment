@@ -3,6 +3,7 @@ import { getEmailTemplates } from "@/modules/communication/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { logger } from "@/lib/logger";
 
 const typeLabels: Record<string, string> = {
   POSITIVE: "Olumlu Dönüş",
@@ -24,8 +25,8 @@ export default async function CommunicationPage() {
   let templates: Awaited<ReturnType<typeof getEmailTemplates>> = [];
   try {
     templates = await getEmailTemplates();
-  } catch {
-    // DB not available
+  } catch (err) {
+    logger.error("Failed to load communications", "communication.page", { error: String(err) });
   }
 
   return (

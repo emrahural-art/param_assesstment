@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 120" width="340" height="120">
+  <style>
+    text { font-family: system-ui, sans-serif; font-size: 13px; fill: #374151; }
+    .header { font-weight: bold; fill: #1e3a5f; font-size: 12px; }
+    .cell { fill: white; stroke: #d1d5db; }
+    .header-bg { fill: #e0f2fe; stroke: #93c5fd; }
+  </style>
+  <rect x="10" y="5" width="180" height="25" class="header-bg"/>
+  <rect x="190" y="5" width="140" height="25" class="header-bg"/>
+  <text x="100" y="22" text-anchor="middle" class="header">Departman</text>
+  <text x="260" y="22" text-anchor="middle" class="header">D�n�?�m Oran? (%)</text>
+
+  <rect x="10" y="30" width="180" height="25" class="cell"/>
+  <rect x="190" y="30" width="140" height="25" class="cell"/>
+  <text x="100" y="47" text-anchor="middle">Sat??</text>
+  <text x="260" y="47" text-anchor="middle" font-weight="bold" fill="#16a34a">88</text>
+
+  <rect x="10" y="55" width="180" height="25" class="cell"/>
+  <rect x="190" y="55" width="140" height="25" class="cell"/>
+  <text x="100" y="72" text-anchor="middle">Pazarlama</text>
+  <text x="260" y="72" text-anchor="middle" font-weight="bold" fill="#dc2626">74</text>
+
+  <rect x="10" y="80" width="180" height="25" class="cell"/>
+  <rect x="190" y="80" width="140" height="25" class="cell"/>
+  <text x="100" y="97" text-anchor="middle">M�?teri Hizmetleri</text>
+  <text x="260" y="97" text-anchor="middle" font-weight="bold">82</text>
+</svg>

@@ -31,6 +31,14 @@ export async function getCandidates(filters?: CandidateFilters) {
     };
   }
 
+  if (filters?.company) {
+    where.company = filters.company;
+  }
+
+  if (filters?.department) {
+    where.department = { contains: filters.department, mode: "insensitive" };
+  }
+
   return db.candidate.findMany({
     where,
     include: { applications: { include: { listing: true } } },
@@ -43,7 +51,22 @@ export async function getCandidateById(id: string) {
     where: { id },
     include: {
       applications: { include: { listing: true } },
-      assessmentResults: { include: { assessment: true } },
+      assessmentResults: {
+        include: {
+          assessment: {
+            include: {
+              questions: {
+                select: { id: true, text: true, options: true, correctAnswer: true, category: true, points: true, order: true },
+                orderBy: { order: "asc" },
+              },
+            },
+          },
+        },
+      },
+      examInvites: {
+        include: { assessment: { select: { id: true, title: true } } },
+        orderBy: { createdAt: "desc" },
+      },
       notes: { include: { user: { select: { name: true } } } },
       communications: { orderBy: { createdAt: "desc" } },
     },

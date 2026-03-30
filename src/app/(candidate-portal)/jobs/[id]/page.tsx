@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { logger } from "@/lib/logger";
 
 export default async function JobDetailPage({
   params,
@@ -16,8 +17,8 @@ export default async function JobDetailPage({
 
   try {
     listing = await getListingById(id);
-  } catch {
-    // DB not available
+  } catch (err) {
+    logger.error("Failed to load job detail", "job-detail.page", { error: String(err) });
   }
 
   if (!listing) return notFound();

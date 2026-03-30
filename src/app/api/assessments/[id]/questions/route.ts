@@ -24,9 +24,10 @@ export async function POST(
   try {
     const question = await addQuestion(parsed.data);
     return NextResponse.json(question, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error("[API] addQuestion error:", err);
     return NextResponse.json(
-      { error: "Soru eklenemedi" },
+      { error: err instanceof Error ? err.message : "Soru eklenemedi" },
       { status: 400 }
     );
   }

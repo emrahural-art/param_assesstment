@@ -7,6 +7,7 @@ import {
   addQuestion as addQuestionService,
   submitExam as submitExamService,
 } from "./service";
+import { logger } from "@/lib/logger";
 
 export async function createAssessmentAction(formData: FormData) {
   const raw = {
@@ -25,7 +26,8 @@ export async function createAssessmentAction(formData: FormData) {
     const assessment = await createAssessmentService(parsed.data);
     revalidatePath("/assessments");
     return { success: true, id: assessment.id };
-  } catch {
+  } catch (err) {
+    logger.error("Failed to create assessment", "assessments.actions", { error: String(err) });
     return { error: "Test oluşturulurken bir hata oluştu" };
   }
 }
@@ -50,7 +52,8 @@ export async function addQuestionAction(formData: FormData) {
     await addQuestionService(parsed.data);
     revalidatePath("/assessments");
     return { success: true };
-  } catch {
+  } catch (err) {
+    logger.error("Failed to add question", "assessments.actions", { error: String(err) });
     return { error: "Soru eklenirken bir hata oluştu" };
   }
 }
@@ -74,7 +77,8 @@ export async function submitExamAction(data: {
       parsed.data.violations
     );
     return { success: true, score: result.score, totalPoints: result.totalPoints };
-  } catch {
+  } catch (err) {
+    logger.error("Failed to submit exam", "assessments.actions", { error: String(err) });
     return { error: "Sınav gönderilirken bir hata oluştu" };
   }
 }

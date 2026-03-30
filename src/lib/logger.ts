@@ -8,6 +8,25 @@ interface LogEntry {
   timestamp: string;
 }
 
+const DB_PERSIST_LEVELS: LogLevel[] = ["error", "warn"];
+
+function persistToDb(level: LogLevel, message: string, context?: string, data?: Record<string, unknown>) {
+  if (!DB_PERSIST_LEVELS.includes(level)) return;
+
+  import("@/lib/prisma")
+    .then(({ db }) =>
+      db.appLog.create({
+        data: {
+          level,
+          message: message.slice(0, 500),
+          context: context ?? null,
+          data: data ?? undefined,
+        },
+      })
+    )
+    .catch(() => {});
+}
+
 function log(level: LogLevel, message: string, context?: string, data?: Record<string, unknown>) {
   const entry: LogEntry = {
     level,
@@ -32,6 +51,8 @@ function log(level: LogLevel, message: string, context?: string, data?: Record<s
     default:
       console.log(output);
   }
+
+  persistToDb(level, message, context, data);
 }
 
 export const logger = {

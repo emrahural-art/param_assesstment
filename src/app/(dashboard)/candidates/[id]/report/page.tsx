@@ -4,6 +4,7 @@ import { getCandidateReportCard } from "@/modules/evaluation/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { logger } from "@/lib/logger";
 
 const stageLabels: Record<string, string> = {
   NEW_APPLICATION: "Yeni Başvuru",
@@ -25,8 +26,8 @@ export default async function CandidateReportPage({
 
   try {
     report = await getCandidateReportCard(id);
-  } catch {
-    // DB not available
+  } catch (err) {
+    logger.error("Failed to load candidate report", "candidate-report.page", { error: String(err) });
   }
 
   if (!report) return notFound();

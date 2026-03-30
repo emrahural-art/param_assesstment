@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="400" height="120">
+  <style>
+    text { font-family: system-ui, sans-serif; fill: #374151; }
+    .label { font-size: 10px; fill: #6b7280; }
+  </style>
+
+  <!-- Start: Arrow up -->
+  <circle cx="50" cy="55" r="30" fill="#f0f9ff" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="50" y="62" text-anchor="middle" font-size="28" fill="#3b82f6">&#x2191;</text>
+  <text x="50" y="100" text-anchor="middle" class="label">Ba?lang?�</text>
+
+  <!-- Step 1: Arrow down (180� rotation) -->
+  <text x="100" y="55" font-size="14" fill="#6b7280">&#x2192;</text>
+  <circle cx="140" cy="55" r="25" fill="#f0f9ff" stroke="#3b82f6" stroke-width="1"/>
+  <text x="140" y="62" text-anchor="middle" font-size="24" fill="#3b82f6">&#x2193;</text>
+  <text x="140" y="95" text-anchor="middle" class="label">1. ad?m</text>
+
+  <!-- Step 2: Arrow up -->
+  <text x="180" y="55" font-size="14" fill="#6b7280">&#x2192;</text>
+  <circle cx="215" cy="55" r="25" fill="#f0f9ff" stroke="#3b82f6" stroke-width="1"/>
+  <text x="215" y="62" text-anchor="middle" font-size="24" fill="#3b82f6">&#x2191;</text>
+  <text x="215" y="95" text-anchor="middle" class="label">2. ad?m</text>
+
+  <!-- Step 3: Arrow down -->
+  <text x="255" y="55" font-size="14" fill="#6b7280">&#x2192;</text>
+  <circle cx="290" cy="55" r="25" fill="#f0f9ff" stroke="#3b82f6" stroke-width="1"/>
+  <text x="290" y="62" text-anchor="middle" font-size="24" fill="#3b82f6">&#x2193;</text>
+  <text x="290" y="95" text-anchor="middle" class="label">3. ad?m</text>
+
+  <!-- Step 4: ? -->
+  <text x="330" y="55" font-size="14" fill="#6b7280">&#x2192;</text>
+  <circle cx="365" cy="55" r="25" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="365" y="62" text-anchor="middle" font-size="24" fill="#ef4444" font-weight="bold">?</text>
+  <text x="365" y="95" text-anchor="middle" class="label">4. ad?m</text>
+</svg>

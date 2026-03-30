@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { updateQuestion, deleteQuestion } from "@/modules/assessments/service";
+import { logger } from "@/lib/logger";
 
 export async function PATCH(
   request: Request,
@@ -11,7 +12,8 @@ export async function PATCH(
   try {
     const question = await updateQuestion(questionId, body);
     return NextResponse.json(question);
-  } catch {
+  } catch (err) {
+    logger.error("Failed to update question", "api.assessments.questions.PUT", { error: String(err) });
     return NextResponse.json(
       { error: "Soru güncellenemedi" },
       { status: 400 }
@@ -28,7 +30,8 @@ export async function DELETE(
   try {
     await deleteQuestion(questionId);
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    logger.error("Failed to delete question", "api.assessments.questions.DELETE", { error: String(err) });
     return NextResponse.json(
       { error: "Soru silinemedi" },
       { status: 400 }

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 const stageLabels: Record<string, string> = {
   NEW_APPLICATION: "Yeni Başvuru",

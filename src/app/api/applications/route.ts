@@ -2,17 +2,24 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
+import { features } from "@/lib/features-env";
+import { logger } from "@/lib/logger";
 
 const applicationSchema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),
   email: z.string().email(),
   phone: z.string().optional(),
+  company: z.enum(["PARAM", "PARAMTECH", "FINROTA", "KREDIM", "UNIVERA"]).optional(),
   listingId: z.string(),
   cvData: z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function POST(request: Request) {
+  if (!features.candidateApply) {
+    return NextResponse.json({ error: "Bu özellik devre dışı" }, { status: 403 });
+  }
+
   const body = await request.json();
   const parsed = applicationSchema.safeParse(body);
 
@@ -46,6 +53,7 @@ export async function POST(request: Request) {
           lastName: parsed.data.lastName,
           email: parsed.data.email,
           phone: parsed.data.phone,
+          company: parsed.data.company,
           cvData: parsed.data.cvData
             ? (parsed.data.cvData as Prisma.InputJsonValue)
             : undefined,
@@ -82,7 +90,8 @@ export async function POST(request: Request) {
       { success: true, candidateId: candidate.id },
       { status: 201 }
     );
-  } catch {
+  } catch (err) {
+    logger.error("Failed to process application", "api.applications.POST", { error: String(err) });
     return NextResponse.json(
       { error: "Başvuru işlenirken bir hata oluştu" },
       { status: 500 }
