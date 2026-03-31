@@ -2,8 +2,21 @@ import { NextResponse } from "next/server";
 import { sendCandidateEmail } from "@/modules/communication/service";
 import { sendEmailSchema, bulkSendSchema } from "@/modules/communication/schema";
 import { logger } from "@/lib/logger";
+import { requireAuth, AuthError, authErrorResponse } from "@/lib/api-auth";
+import { checkRateLimit, getClientId } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const rl = checkRateLimit(`email:${getClientId(request)}`, { limit: 20, windowSec: 60 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Çok fazla istek, lütfen bekleyin" }, { status: 429 });
+  }
+
+  try {
+    await requireAuth(request, "communication:send");
+  } catch (e) {
+    return authErrorResponse(e as AuthError);
+  }
+
   const body = await request.json();
 
   if (body.candidateIds && Array.isArray(body.candidateIds)) {

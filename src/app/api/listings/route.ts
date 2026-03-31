@@ -3,6 +3,7 @@ import { getListings } from "@/modules/listings/queries";
 import { createListing } from "@/modules/listings/service";
 import { createListingSchema } from "@/modules/listings/schema";
 import { logger } from "@/lib/logger";
+import { requireAuth, AuthError, authErrorResponse } from "@/lib/api-auth";
 
 export async function GET() {
   try {
@@ -18,6 +19,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  try {
+    await requireAuth(request, "listings:write");
+  } catch (e) {
+    return authErrorResponse(e as AuthError);
+  }
+
   const body = await request.json();
   const parsed = createListingSchema.safeParse(body);
 

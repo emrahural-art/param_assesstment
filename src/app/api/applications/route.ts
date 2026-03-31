@@ -4,6 +4,7 @@ import { db } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { features } from "@/lib/features-env";
 import { logger } from "@/lib/logger";
+import { checkRateLimit, getClientId } from "@/lib/rate-limit";
 
 const applicationSchema = z.object({
   firstName: z.string().min(2),
@@ -16,6 +17,11 @@ const applicationSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const rl = checkRateLimit(`apply:${getClientId(request)}`, { limit: 5, windowSec: 60 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Çok fazla başvuru, lütfen bekleyin" }, { status: 429 });
+  }
+
   if (!features.candidateApply) {
     return NextResponse.json({ error: "Bu özellik devre dışı" }, { status: 403 });
   }

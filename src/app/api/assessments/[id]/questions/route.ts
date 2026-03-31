@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { addQuestion } from "@/modules/assessments/service";
 import { createQuestionSchema } from "@/modules/assessments/schema";
+import { requireAuth, AuthError, authErrorResponse } from "@/lib/api-auth";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  try {
+    await requireAuth(request, "assessments:write");
+  } catch (e) {
+    return authErrorResponse(e as AuthError);
+  }
+
   const { id } = await params;
   const body = await request.json();
 

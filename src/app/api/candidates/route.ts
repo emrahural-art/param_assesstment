@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
 import { getCandidates } from "@/modules/candidates/queries";
 import { createCandidate } from "@/modules/candidates/service";
 import { hrCreateCandidateSchema } from "@/modules/candidates/schema";
@@ -7,6 +6,7 @@ import { toCandidateDTOList } from "@/modules/candidates/mapper";
 import { db } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { auditLog } from "@/lib/audit";
+import { requireAuth, AuthError, authErrorResponse } from "@/lib/api-auth";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -29,6 +29,13 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  let authToken;
+  try {
+    authToken = await requireAuth(request, "candidates:write");
+  } catch (e) {
+    return authErrorResponse(e as AuthError);
+  }
+
   const body = await request.json();
   const parsed = hrCreateCandidateSchema.safeParse(body);
 
@@ -44,23 +51,19 @@ export async function POST(request: Request) {
       consentAt: new Date(),
     });
 
-    if (note?.trim()) {
-      const token = await getToken({ req: request as never, secret: process.env.AUTH_SECRET });
-      if (token?.sub) {
-        await db.candidateNote.create({
-          data: {
-            candidateId: candidate.id,
-            userId: token.sub,
-            content: note.trim(),
-          },
-        });
-      }
+    if (note?.trim() && authToken.sub) {
+      await db.candidateNote.create({
+        data: {
+          candidateId: candidate.id,
+          userId: authToken.sub,
+          content: note.trim(),
+        },
+      });
     }
 
-    const token2 = await getToken({ req: request as never, secret: process.env.AUTH_SECRET });
     auditLog({
-      userId: token2?.sub ?? null,
-      userName: (token2?.name as string) ?? null,
+      userId: authToken.sub ?? null,
+      userName: (authToken.name as string) ?? null,
       action: "CANDIDATE_CREATED",
       entity: "Candidate",
       entityId: candidate.id,

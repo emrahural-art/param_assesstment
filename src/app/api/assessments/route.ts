@@ -3,6 +3,7 @@ import { getAssessments } from "@/modules/assessments/queries";
 import { createAssessment } from "@/modules/assessments/service";
 import { createAssessmentSchema } from "@/modules/assessments/schema";
 import { logger } from "@/lib/logger";
+import { requireAuth, AuthError, authErrorResponse } from "@/lib/api-auth";
 
 export async function GET() {
   try {
@@ -15,6 +16,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  try {
+    await requireAuth(request, "assessments:write");
+  } catch (e) {
+    return authErrorResponse(e as AuthError);
+  }
+
   const body = await request.json();
   const parsed = createAssessmentSchema.safeParse(body);
 

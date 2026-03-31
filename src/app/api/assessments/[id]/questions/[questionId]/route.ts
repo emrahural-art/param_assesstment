@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { updateQuestion, deleteQuestion } from "@/modules/assessments/service";
 import { logger } from "@/lib/logger";
+import { requireAuth, AuthError, authErrorResponse } from "@/lib/api-auth";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; questionId: string }> }
 ) {
+  try {
+    await requireAuth(request, "assessments:write");
+  } catch (e) {
+    return authErrorResponse(e as AuthError);
+  }
+
   const { questionId } = await params;
   const body = await request.json();
 
@@ -22,9 +29,15 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string; questionId: string }> }
 ) {
+  try {
+    await requireAuth(request, "assessments:delete");
+  } catch (e) {
+    return authErrorResponse(e as AuthError);
+  }
+
   const { questionId } = await params;
 
   try {

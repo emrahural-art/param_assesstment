@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCandidateById } from "@/modules/candidates/queries";
 import { updateCandidate, deleteCandidate } from "@/modules/candidates/service";
 import { logger } from "@/lib/logger";
+import { requireAuth, AuthError, authErrorResponse } from "@/lib/api-auth";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -15,6 +16,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    await requireAuth(request, "candidates:write");
+  } catch (e) {
+    return authErrorResponse(e as AuthError);
+  }
+
   const { id } = await params;
   const body = await request.json();
 
@@ -27,7 +34,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    await requireAuth(request, "candidates:delete");
+  } catch (e) {
+    return authErrorResponse(e as AuthError);
+  }
+
   const { id } = await params;
 
   try {

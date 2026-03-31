@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getListingById } from "@/modules/listings/queries";
 import { updateListing, deleteListing } from "@/modules/listings/service";
 import { logger } from "@/lib/logger";
+import { requireAuth, AuthError, authErrorResponse } from "@/lib/api-auth";
 
 export async function GET(
   _request: Request,
@@ -28,6 +29,12 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  try {
+    await requireAuth(request, "listings:write");
+  } catch (e) {
+    return authErrorResponse(e as AuthError);
+  }
+
   const { id } = await params;
   const body = await request.json();
 
@@ -44,9 +51,15 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  try {
+    await requireAuth(request, "listings:write");
+  } catch (e) {
+    return authErrorResponse(e as AuthError);
+  }
+
   const { id } = await params;
 
   try {

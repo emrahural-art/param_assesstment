@@ -3,7 +3,17 @@ import { db } from "@/lib/prisma";
 import { eventBus } from "@/lib/events";
 import { logger } from "@/lib/logger";
 
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+
 export async function POST(request: Request) {
+  const secret =
+    request.headers.get("x-webhook-secret") ??
+    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+
+  if (!WEBHOOK_SECRET || secret !== WEBHOOK_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
 
